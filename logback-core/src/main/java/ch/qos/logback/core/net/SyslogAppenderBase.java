@@ -1,8 +1,8 @@
 /**
  * Logback: the generic, reliable, fast and flexible logging framework.
- * 
+ *
  * Copyright (C) 2000-2008, QOS.ch
- * 
+ *
  * This library is free software, you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
  * Software Foundation.
@@ -20,7 +20,7 @@ import ch.qos.logback.core.Layout;
 
 /**
  * Base class for SyslogAppender.
- * 
+ *
  * @author Ceki G&uumllc&uuml;
  *
  * @param <E>
@@ -29,8 +29,12 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
 
   final static String SYSLOG_LAYOUT_URL = CoreConstants.CODES_URL + "#syslog_layout";
   final static int MSG_SIZE_LIMIT = 256*1024;
-  
+
   String facilityStr;
+  String appName;
+  String messageId;
+  String structuredDataId;
+  boolean rfc5424;
   String syslogHost;
   protected String suffixPattern;
   SyslogWriter sw;
@@ -61,7 +65,7 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
       super.start();
     }
   }
-  
+
   abstract public Layout<E> buildLayout(String facilityStr);
 
   abstract public int getSeverityForEvent(Object eventObject);
@@ -85,14 +89,14 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
       stop();
     }
   }
-  
+
   protected void postProcess(Object event, SyslogWriter sw) {
-    
+
   }
 
   /**
    * Returns the integer value corresponding to the named syslog facility.
-   * 
+   *
    * @throws IllegalArgumentException
    *           if the facility string is not recognized
    */
@@ -153,7 +157,7 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
   /**
    * The <b>SyslogHost</b> option is the name of the the syslog host where log
    * output should go.
-   * 
+   *
    * <b>WARNING</b> If the SyslogHost is not set, then this appender will fail.
    */
   public void setSyslogHost(String syslogHost) {
@@ -162,7 +166,7 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
 
   /**
    * Returns the string value of the <b>Facility</b> option.
-   * 
+   *
    * See {@link #setFacility} for the set of allowed values.
    */
   public String getFacility() {
@@ -174,7 +178,7 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
    * MAIL, DAEMON, AUTH, SYSLOG, LPR, NEWS, UUCP, CRON, AUTHPRIV, FTP, NTP,
    * AUDIT, ALERT, CLOCK, LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5,
    * LOCAL6, LOCAL7. Case is not important.
-   * 
+   *
    * <p>
    * See {@link SyslogConstants} and RFC 3164 for more information about the
    * <b>Facility</b> option.
@@ -186,8 +190,40 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
     this.facilityStr = facilityStr;
   }
 
+  public String getAppName() {
+    return appName;
+  }
+
+  public void setAppName(String appName) {
+    this.appName = appName;
+  }
+
+  public String getMessageId() {
+    return messageId;
+  }
+
+  public void setMessageId(String messageId) {
+    this.messageId = messageId;
+  }
+
+  public String getStructuredDataId() {
+    return structuredDataId;
+  }
+
+  public void setStructuredDataId(String structuredDataId) {
+    this.structuredDataId = structuredDataId;
+  }
+
+  public boolean isRfc5424() {
+    return rfc5424;
+  }
+
+  public void setRfc5424(boolean rfc5424) {
+    this.rfc5424 = rfc5424;
+  }
+
   /**
-   * 
+   *
    * @return
    */
   public int getPort() {
@@ -221,7 +257,7 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
 
   /**
    * See {@link #setSuffixPattern(String).
-   * 
+   *
    * @return
    */
   public String getSuffixPattern() {
@@ -231,7 +267,7 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
   /**
    * The <b>suffixPattern</b> option specifies the fortmat of the
    * non-standardized part the message sent to the syslog server.
-   * 
+   *
    * @param pattern
    */
   public void setSuffixPattern(String suffixPattern) {

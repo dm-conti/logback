@@ -1,8 +1,8 @@
 /**
  * Logback: the generic, reliable, fast and flexible logging framework.
- * 
+ *
  * Copyright (C) 2000-2009, QOS.ch
- * 
+ *
  * This library is free software, you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
  * Software Foundation.
@@ -22,7 +22,7 @@ import ch.qos.logback.classic.Level;
 
 /**
  * A read/write and serializable implementation of {@link ILoggingEvent}.
- * 
+ *
  * @author Ceki G&uuml;lc&uuml;
 
  */
@@ -50,7 +50,7 @@ public class PubLoggingEventVO implements ILoggingEvent, Serializable {
   public Marker marker;
   public Map<String, String> mdcPropertyMap;
   public long timeStamp;
-
+  public Map<String, String> structuredDataMap;
 
 
   public String getThreadName() {
@@ -123,6 +123,14 @@ public class PubLoggingEventVO implements ILoggingEvent, Serializable {
 
   public Map<String, String> getMDCPropertyMap() {
     return mdcPropertyMap;
+  }
+
+  public boolean hasStructuredData() {
+    return structuredDataMap != null;
+  }
+
+  public StructuredData getStructuredData() {
+    return new StructuredData(structuredDataMap);
   }
 
   public void prepareForDeferredProcessing() {
@@ -216,9 +224,15 @@ public class PubLoggingEventVO implements ILoggingEvent, Serializable {
         return false;
     } else if (!mdcPropertyMap.equals(other.mdcPropertyMap))
       return false;
+
+    if (structuredDataMap == null) {
+      if (other.structuredDataMap != null)
+        return false;
+    } else if (!structuredDataMap.equals(other.structuredDataMap))
+      return false;
     return true;
   }
-  
+
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append(timeStamp);
