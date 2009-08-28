@@ -35,7 +35,7 @@ public class SyslogStartConverter extends ClassicConverter {
   String messageId;
   String messageIdKey;
   String structuredDataId;
-  boolean isRfc5254;
+  boolean isRfc5424;
 
   public void start() {
     int errorCount = 0;
@@ -60,8 +60,8 @@ public class SyslogStartConverter extends ClassicConverter {
         case MESSAGEID_KEY:
           messageIdKey = entry.getValue();
           break;
-        case RFC5254:
-          isRfc5254 = Boolean.parseBoolean(entry.getValue());
+        case RFC5424:
+          isRfc5424 = Boolean.parseBoolean(entry.getValue());
           break;
       }
     }
@@ -69,7 +69,7 @@ public class SyslogStartConverter extends ClassicConverter {
     localHostName = getLocalHostname();
     try {
       // hours should be in 0-23, see also http://jira.qos.ch/browse/LBCLASSIC-48
-      simpleFormat = isRfc5254 ? new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS000Z")
+      simpleFormat = isRfc5424 ? new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS000Z")
           : new SimpleDateFormat("MMM dd HH:mm:ss", new DateFormatSymbols(Locale.US));
     } catch (IllegalArgumentException e) {
       addError("Could not instantiate SimpleDateFormat", e);
@@ -89,12 +89,15 @@ public class SyslogStartConverter extends ClassicConverter {
     sb.append("<");
     sb.append(pri);
     sb.append(">");
+    if (isRfc5424) {
+      sb.append("1 ");
+    }
     sb.append(computeTimeStampString(event.getTimeStamp()));
     sb.append(' ');
     sb.append(localHostName);
     sb.append(' ');
 
-    if (isRfc5254) {
+    if (isRfc5424) {
       sb.append(extendedHeader(event));
     }
 

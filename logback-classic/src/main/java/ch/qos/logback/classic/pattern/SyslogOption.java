@@ -13,5 +13,5 @@ package ch.qos.logback.classic.pattern;
  * Options passed from the SyslogAppender to its Converter.
  */
 public enum SyslogOption {
-  RFC5254, APPNAME, MESSAGEID, MESSAGEID_KEY
+  RFC5424, APPNAME, MESSAGEID, MESSAGEID_KEY
 }

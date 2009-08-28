@@ -43,7 +43,7 @@ public class SyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
   public Layout<ILoggingEvent> buildLayout(String facilityStr) {
     StringBuilder prefixPattern = new StringBuilder();
     ConverterOptions<SyslogOption> syslogOptions = new ConverterOptions<SyslogOption>(facilityStr);
-    syslogOptions.add(SyslogOption.RFC5254, this.isRfc5424());
+    syslogOptions.add(SyslogOption.RFC5424, this.isRfc5424());
     syslogOptions.add(SyslogOption.APPNAME, getAppName());
     syslogOptions.add(SyslogOption.MESSAGEID, getMessageId());
 
