@@ -1,8 +1,8 @@
 /**
  * Logback: the reliable, generic, fast and flexible logging framework.
- * 
+ *
  * Copyright (C) 1999-2006, QOS.ch
- * 
+ *
  * This library is free software, you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
  * Software Foundation.
@@ -26,13 +26,13 @@ import ch.qos.logback.classic.LoggerContext;
  * The internal representation of logging events. When an affirmative decision
  * is made to log then a <code>LoggingEvent</code> instance is created. This
  * instance is passed around to the different logback-classic components.
- * 
+ *
  * <p> Writers of logback-classic components such as appenders should be aware
  * of that some of the LoggingEvent fields are initialized lazily. Therefore, an
  * appender wishing to output data to be later correctly read by a receiver,
  * must initialize "lazy" fields prior to writing them out. See the
  * {@link #prepareForDeferredProcessing()} method for the exact list. </p>
- * 
+ *
  * @author Ceki G&uuml;lc&uuml;
  * @author S&eacute;bastien Pennec
  */
@@ -41,7 +41,7 @@ public class LoggingEvent implements ILoggingEvent {
   /**
    * Fully qualified name of the calling Logger class. This field does not
    * survive serialization.
-   * 
+   *
    * <p> Note that the getCallerInformation() method relies on this fact.
    */
   transient String fqnOfLoggerClass;
@@ -57,10 +57,10 @@ public class LoggingEvent implements ILoggingEvent {
 
   /**
    * Level of logging event.
-   * 
+   *
    * <p> This field should not be accessed directly. You shoud use the {@link
    * #getLevel} method instead. </p>
-   * 
+   *
    */
   private transient Level level;
 
@@ -80,6 +80,8 @@ public class LoggingEvent implements ILoggingEvent {
   private Marker marker;
 
   private Map<String, String> mdcPropertyMap;
+
+  private StructuredData structuredData;
 
   /**
    * The number of milliseconds elapsed from 1/1/1970 until logging event was
@@ -184,7 +186,7 @@ public class LoggingEvent implements ILoggingEvent {
   /**
    * This method should be called prior to serializing an event. It should also
    * be called when using asynchronous or deferred logging.
-   * 
+   *
    * <p> Note that due to performance concerns, this method does NOT extract
    * caller data. It is the responsibility of the caller to extract caller
    * information.
@@ -237,7 +239,7 @@ public class LoggingEvent implements ILoggingEvent {
    * Get the caller information for this logging event. If caller information is
    * null at the time of its invocation, this method extracts location
    * information. The collected information is cached for future use.
-   * 
+   *
    * <p> Note that after serialization it is impossible to correctly extract
    * caller information. </p>
    */
@@ -267,6 +269,9 @@ public class LoggingEvent implements ILoggingEvent {
           "The marker has been already set for this event.");
     }
     this.marker = marker;
+    if (StructuredData.isMarker(marker)) {
+      structuredData = StructuredData.getStructuredData(this.message, this.argumentArray);
+    }
   }
 
   public long getContextBirthTime() {
@@ -291,6 +296,14 @@ public class LoggingEvent implements ILoggingEvent {
 
   public Map<String, String> getMDCPropertyMap() {
     return mdcPropertyMap;
+  }
+
+  public boolean hasStructuredData() {
+    return structuredData != null;
+  }
+
+  public StructuredData getStructuredData() {
+    return structuredData;
   }
 
   @Override

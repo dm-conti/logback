@@ -9,7 +9,7 @@ import ch.qos.logback.classic.Level;
 /**
  * The central interface in logback-classic. In a nutshell, logback-classic is
  * nothing more than a processing chain built around this interface.
- * 
+ *
  * @author Ceki G&uuml;lc&uuml;
  * @since 0.9.16
  */
@@ -34,9 +34,9 @@ public interface ILoggingEvent {
   /**
    * Return caller data associated with this event. Note that calling this event
    * may trigger the computation of caller data.
-   * 
+   *
    * @return the caller data associated with this event.
-   * 
+   *
    * @see #hasCallerData()
    */
   public StackTraceElement[] getCallerData();
@@ -44,11 +44,11 @@ public interface ILoggingEvent {
   /**
    * If this event has caller data, then true is returned. Otherwise the
    * returned value is null.
-   * 
+   *
    * <p>Logback components wishing to use caller data if available without
    * causing it to be computed can invoke this method before invoking
    * {@link #getCallerData()}.
-   * 
+   *
    * @return whether this event has caller data
    */
   public boolean hasCallerData();
@@ -60,5 +60,9 @@ public interface ILoggingEvent {
   public long getTimeStamp();
 
   public void prepareForDeferredProcessing();
+
+  public boolean hasStructuredData();
+  
+  public StructuredData getStructuredData();
 
 }
