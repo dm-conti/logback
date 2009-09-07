@@ -81,8 +81,6 @@ public class LoggingEvent implements ILoggingEvent {
 
   private Map<String, String> mdcPropertyMap;
 
-  private StructuredData structuredData;
-
   /**
    * The number of milliseconds elapsed from 1/1/1970 until logging event was
    * created.
@@ -269,9 +267,6 @@ public class LoggingEvent implements ILoggingEvent {
           "The marker has been already set for this event.");
     }
     this.marker = marker;
-    if (StructuredData.isMarker(marker)) {
-      structuredData = StructuredData.getStructuredData(this.message, this.argumentArray);
-    }
   }
 
   public long getContextBirthTime() {
@@ -296,14 +291,6 @@ public class LoggingEvent implements ILoggingEvent {
 
   public Map<String, String> getMDCPropertyMap() {
     return mdcPropertyMap;
-  }
-
-  public boolean hasStructuredData() {
-    return structuredData != null;
-  }
-
-  public StructuredData getStructuredData() {
-    return structuredData;
   }
 
   @Override

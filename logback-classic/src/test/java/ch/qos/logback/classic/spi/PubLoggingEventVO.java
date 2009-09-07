@@ -50,7 +50,7 @@ public class PubLoggingEventVO implements ILoggingEvent, Serializable {
   public Marker marker;
   public Map<String, String> mdcPropertyMap;
   public long timeStamp;
-  public Map<String, String> structuredDataMap;
+
 
 
   public String getThreadName() {
@@ -123,14 +123,6 @@ public class PubLoggingEventVO implements ILoggingEvent, Serializable {
 
   public Map<String, String> getMDCPropertyMap() {
     return mdcPropertyMap;
-  }
-
-  public boolean hasStructuredData() {
-    return structuredDataMap != null;
-  }
-
-  public StructuredData getStructuredData() {
-    return new StructuredData(structuredDataMap);
   }
 
   public void prepareForDeferredProcessing() {
@@ -223,12 +215,6 @@ public class PubLoggingEventVO implements ILoggingEvent, Serializable {
       if (other.mdcPropertyMap != null)
         return false;
     } else if (!mdcPropertyMap.equals(other.mdcPropertyMap))
-      return false;
-
-    if (structuredDataMap == null) {
-      if (other.structuredDataMap != null)
-        return false;
-    } else if (!structuredDataMap.equals(other.structuredDataMap))
       return false;
     return true;
   }

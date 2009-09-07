@@ -35,6 +35,9 @@ public class ConverterOptions<T extends Enum<T>> {
   }
 
   public void add(T option, String value) {
+    if (value == null) {
+      return;
+    }
     if (builder.length() > 0) {
       builder.append(", ");
     }

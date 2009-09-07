@@ -61,8 +61,4 @@ public interface ILoggingEvent {
 
   public void prepareForDeferredProcessing();
 
-  public boolean hasStructuredData();
-  
-  public StructuredData getStructuredData();
-
 }

@@ -45,7 +45,6 @@ public class LoggingEventVO implements ILoggingEvent, Serializable {
   private Marker marker;
   private Map<String, String> mdcPropertyMap;
   private long timeStamp;
-  private Map<String, String> structuredDataMap;
 
   public static LoggingEventVO build(ILoggingEvent le) {
     LoggingEventVO ledo = new LoggingEventVO();
@@ -63,9 +62,6 @@ public class LoggingEventVO implements ILoggingEvent, Serializable {
     // fixes http://jira.qos.ch/browse/LBCLASSIC-145
     if(le.hasCallerData()) {
       ledo.callerDataArray = le.getCallerData();
-    }
-    if (le.hasStructuredData()) {
-      ledo.structuredDataMap = le.getStructuredData().getMap(true);
     }
     return ledo;
   }
@@ -140,14 +136,6 @@ public class LoggingEventVO implements ILoggingEvent, Serializable {
 
   public Map<String, String> getMDCPropertyMap() {
     return mdcPropertyMap;
-  }
-
-  public boolean hasStructuredData() {
-    return structuredDataMap != null;
-  }
-
-  public StructuredData getStructuredData() {
-    return new StructuredData(structuredDataMap);
   }
 
   public void prepareForDeferredProcessing() {
@@ -240,12 +228,6 @@ public class LoggingEventVO implements ILoggingEvent, Serializable {
       if (other.mdcPropertyMap != null)
         return false;
     } else if (!mdcPropertyMap.equals(other.mdcPropertyMap))
-      return false;
-        if (mdcPropertyMap == null) {
-
-    if (other.structuredDataMap != null)
-        return false;
-    } else if (!structuredDataMap.equals(other.structuredDataMap))
       return false;
     return true;
   }

@@ -12,6 +12,6 @@ package ch.qos.logback.classic.pattern;
 /**
  * Options passed from the SyslogAppender to its Converter.
  */
-public enum SyslogOption {
-  APPNAME, MESSAGEID
+public enum StructuredDataOption {
+  LEADING_SPACE, TRAILING_SPACE, FORMAT, INCLUDE_MDC, DEFAULT_ID 
 }

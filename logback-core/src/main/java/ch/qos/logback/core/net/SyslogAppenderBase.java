@@ -31,10 +31,6 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
   final static int MSG_SIZE_LIMIT = 256*1024;
 
   String facilityStr;
-  String appName;
-  String messageId;
-  String structuredDataId;
-  boolean rfc5424;
   String syslogHost;
   protected String suffixPattern;
   SyslogWriter sw;
@@ -188,38 +184,6 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
       facilityStr = facilityStr.trim();
     }
     this.facilityStr = facilityStr;
-  }
-
-  public String getAppName() {
-    return appName;
-  }
-
-  public void setAppName(String appName) {
-    this.appName = appName;
-  }
-
-  public String getMessageId() {
-    return messageId;
-  }
-
-  public void setMessageId(String messageId) {
-    this.messageId = messageId;
-  }
-
-  public String getStructuredDataId() {
-    return structuredDataId;
-  }
-
-  public void setStructuredDataId(String structuredDataId) {
-    this.structuredDataId = structuredDataId;
-  }
-
-  public boolean isRfc5424() {
-    return rfc5424;
-  }
-
-  public void setRfc5424(boolean rfc5424) {
-    this.rfc5424 = rfc5424;
   }
 
   /**

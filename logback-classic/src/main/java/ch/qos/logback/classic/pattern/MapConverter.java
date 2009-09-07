@@ -58,7 +58,7 @@ public abstract class MapConverter extends ClassicConverter {
 
     if (key == null) {
       // if no key is specified, return all the
-      // values present in the MDC, separated with a single space.
+      // values present in the Map, separated with a single space.
       StringBuilder buf = new StringBuilder();
       String quoteChar = isQuoted ? "\"" : "";
       for (Map.Entry<String, String> entry : map.entrySet()) {

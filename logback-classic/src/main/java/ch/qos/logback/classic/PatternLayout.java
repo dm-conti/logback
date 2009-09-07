@@ -1,8 +1,8 @@
 /**
  * Logback: the generic, reliable, fast and flexible logging framework.
- * 
+ *
  * Copyright (C) 2000-2009, QOS.ch
- * 
+ *
  * This library is free software, you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
  * Software Foundation.
@@ -33,6 +33,7 @@ import ch.qos.logback.classic.pattern.NopThrowableInformationConverter;
 import ch.qos.logback.classic.pattern.RelativeTimeConverter;
 import ch.qos.logback.classic.pattern.ThreadConverter;
 import ch.qos.logback.classic.pattern.ThrowableProxyConverter;
+import ch.qos.logback.classic.pattern.StructuredDataConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
@@ -46,7 +47,7 @@ import ch.qos.logback.core.pattern.PatternLayoutBase;
  * <p>
  * For more information about this layout, please refer to the online manual at
  * http://logback.qos.ch/manual/layouts.html#PatternLayout
- * 
+ *
  */
 
 public class PatternLayout extends PatternLayoutBase<ILoggingEvent> {
@@ -91,6 +92,9 @@ public class PatternLayout extends PatternLayoutBase<ILoggingEvent> {
     defaultConverterMap.put("X", MDCConverter.class.getName());
     defaultConverterMap.put("mdc", MDCConverter.class.getName());
 
+    defaultConverterMap.put("SD", StructuredDataConverter.class.getName());
+    defaultConverterMap.put("structuredData", StructuredDataConverter.class.getName());    
+
     defaultConverterMap.put("ex", ThrowableProxyConverter.class.getName());
     defaultConverterMap.put("exception", ThrowableProxyConverter.class
         .getName());
@@ -110,14 +114,14 @@ public class PatternLayout extends PatternLayoutBase<ILoggingEvent> {
 
     defaultConverterMap.put("cn", ContextNameAction.class.getName());
     defaultConverterMap.put("contextName", ContextNameConverter.class.getName());
-    
+
     defaultConverterMap.put("caller", CallerDataConverter.class.getName());
 
     defaultConverterMap.put("marker", MarkerConverter.class.getName());
 
     defaultConverterMap.put("property", PropertyConverter.class.getName());
 
-    
+
     defaultConverterMap.put("n", LineSeparatorConverter.class.getName());
   }
 

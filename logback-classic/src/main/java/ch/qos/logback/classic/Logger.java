@@ -1,8 +1,8 @@
 /**
  * Logback: the generic, reliable, fast and flexible logging framework for Java.
- * 
+ *
  * Copyright (C) 2000-2006, QOS.ch
- * 
+ *
  * This library is free software, you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
  * Software Foundation.
@@ -19,7 +19,9 @@ import java.util.List;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
+import org.slf4j.StructuredData;
 import org.slf4j.spi.LocationAwareLogger;
+import org.slf4j.spi.XLocationAwareLogger;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggerRemoteView;
@@ -29,11 +31,11 @@ import ch.qos.logback.core.spi.AppenderAttachable;
 import ch.qos.logback.core.spi.AppenderAttachableImpl;
 import ch.qos.logback.core.spi.FilterReply;
 
-public final class Logger implements org.slf4j.Logger, LocationAwareLogger,
+public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
     AppenderAttachable<ILoggingEvent>, Serializable {
 
   /**
-   * 
+   *
    */
   private static final long serialVersionUID = 5454405123156820674L;
 
@@ -75,7 +77,7 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger,
    * the 'aai'ariable is set is within the addAppender method. This method is
    * synchronized on 'this' (Logger) protecting against simultaneous
    * re-configuration of this logger (a very unlikely scenario).
-   * 
+   *
    * <p> It is further assumed that the AppenderAttachableImpl is responsible
    * for its internal synchronization and thread safety. Thus, we can get away
    * with *not* synchronizing on the 'aai' (check null/ read) because <p> 1) the
@@ -157,14 +159,14 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger,
     if(newLevel == null && isRootLogger()) {
       throw new IllegalArgumentException("The level of the root logger cannot be set to null");
     }
-        
+
     level = newLevel;
     if (newLevel == null) {
       effectiveLevelInt = parent.effectiveLevelInt;
     } else {
       effectiveLevelInt = newLevel.levelInt;
     }
-    
+
     if (childrenList != null) {
       int len = childrenList.size();
       for (int i = 0; i < len; i++) {
@@ -178,7 +180,7 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger,
   /**
    * This method is invoked by parent logger to let this logger know that the
    * prent's levelInt changed.
-   * 
+   *
    * @param newParentLevel
    */
   private synchronized void handleParentLevelChange(int newParentLevelInt) {
@@ -248,7 +250,7 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger,
 
   /**
    * Invoke all the appenders of this logger.
-   * 
+   *
    * @param event
    *                The event to log
    */
@@ -288,10 +290,10 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger,
    * Create a child of this logger by suffix, that is, the part of the name
    * extending this logger. For example, if this logger is named "x.y" and the
    * lastPart is "z", then the created child logger will be named "x.y.z".
-   * 
+   *
    * <p> IMPORTANT: Calls to this method must be within a syncronized block on
    * this logger.
-   * 
+   *
    * @param lastPart
    *                the suffix (i.e. last part) of the child logger name. This
    *                parameter may not include dots, i.e. the logger separator
@@ -330,7 +332,7 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger,
       level = null;
     }
   }
-  
+
   void recursiveReset() {
     detachAndStopAllAppenders();
     localLevelReset();
@@ -758,11 +760,11 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger,
   /**
    * Method that calls the attached TurboFilter objects based on the logger and
    * the level.
-   * 
+   *
    * It is used by isYYYEnabled() methods.
-   * 
+   *
    * It returns the typical FilterReply values: ACCEPT, NEUTRAL or DENY.
-   * 
+   *
    * @param level
    * @return the reply given by the TurboFilters
    */
@@ -773,7 +775,7 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger,
 
   /**
    * Return the context for this logger.
-   * 
+   *
    * @return the context
    */
   public LoggerContext getLoggerContext() {
@@ -790,6 +792,42 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger,
 
   public void log(Marker marker, String fqcn, int levelInt, String message,
       Throwable t) {
+    Level level = getLevel(levelInt);
+    filterAndLog_0_Or3Plus(fqcn, marker, level, message, null, t);
+  }
+
+  /**
+   * Printing method with support for location information.
+   *
+   * @param marker The Marker.
+   * @param fqcn The fully qualified class name of the <b>caller</b>
+   * @param levelInt The logging level.
+   * @param message The message to be logged.
+   * @param argArray Any parameters or null.
+   * @param t A Throwable or null.
+   */
+  public void log(Marker marker, String fqcn, int levelInt, String message, Object[] argArray, Throwable t) {
+    Level level = getLevel(levelInt);
+    filterAndLog_0_Or3Plus(fqcn, marker, level, message, argArray, t);
+  }
+
+
+  /**
+   * Logs Structured Data. If the underlying logging implementation does not support structured data then
+   * the format string will be used as advice on how to format the structured data.
+   * @param marker The Marker
+   * @param fqcn The fully qualified class name of the <b>caller</b>
+   * @param levelInt The logging level
+   * @param data The StructuredData.
+   * @param format The format style or null to use the default.
+   * @param t A Throwable or null.
+   */
+  public void log(Marker marker, String fqcn, int levelInt, StructuredData data, String format, Throwable t) {
+    Level level = getLevel(levelInt);
+    filterAndLog_1(fqcn, marker, level, null, data, t);
+  }
+
+  private Level getLevel(int levelInt) {
     Level level = null;
     switch (levelInt) {
     case LocationAwareLogger.TRACE_INT:
@@ -810,16 +848,16 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger,
     default:
       throw new IllegalArgumentException(levelInt + " not a valid level value");
     }
-    filterAndLog_0_Or3Plus(fqcn, marker, level, message, null, t);
+    return level;
   }
 
   /**
    * After serialization, the logger instance does not know its LoggerContext.
    * The best we can do here, is to return a logger with the same name as
    * generated by LoggerFactory.
-   * 
+   *
    * @return Logger instance with the same name
-   * @throws ObjectStreamException
+   * @throws ObjectStreamException if an error occurs.
    */
   protected Object readResolve() throws ObjectStreamException {
     return LoggerFactory.getLogger(getName());

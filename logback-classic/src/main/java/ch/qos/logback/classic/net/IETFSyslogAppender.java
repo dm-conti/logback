@@ -12,7 +12,10 @@ package ch.qos.logback.classic.net;
 import java.io.IOException;
 
 import ch.qos.logback.classic.PatternLayout;
-import ch.qos.logback.classic.pattern.SyslogStartConverter;
+import ch.qos.logback.classic.pattern.ConverterOptions;
+import ch.qos.logback.classic.pattern.SyslogOption;
+import ch.qos.logback.classic.pattern.IETFSyslogStartConverter;
+import ch.qos.logback.classic.pattern.StructuredDataOption;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
@@ -29,29 +32,39 @@ import ch.qos.logback.core.net.SyslogWriter;
  *
  * @author Ceki G&uumllc&uuml;
  */
-public class SyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
-
-  static final public String DEFAULT_SUFFIX_PATTERN = "[%thread] %logger %msg";
+public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
+  String appName;
+  String messageId;
+  String structuredDataId;
+  boolean mdcIncluded;
 
   PatternLayout prefixLayout = new PatternLayout();
 
   public Layout<ILoggingEvent> buildLayout(String facilityStr) {
-    String prefixPattern = "%syslogStart{" + facilityStr + "}%nopex";
+    ConverterOptions<SyslogOption> syslogOptions = new ConverterOptions<SyslogOption>(facilityStr);
+    syslogOptions.add(SyslogOption.APPNAME, getAppName());
+    syslogOptions.add(SyslogOption.MESSAGEID, getMessageId());
 
-    prefixLayout.getInstanceConverterMap().put("syslogStart",
-        SyslogStartConverter.class.getName());
+    String prefixPattern = "%syslogStart{" + syslogOptions.toString() + "}%nopex";
+
+    prefixLayout.getInstanceConverterMap().put("syslogStart", IETFSyslogStartConverter.class.getName());
+
     prefixLayout.setPattern(prefixPattern);
     prefixLayout.setContext(getContext());
     prefixLayout.start();
 
     PatternLayout fullLayout = new PatternLayout();
-    fullLayout.getInstanceConverterMap().put("syslogStart",
-        SyslogStartConverter.class.getName());
+
+    fullLayout.getInstanceConverterMap().put("syslogStart", IETFSyslogStartConverter.class.getName());
 
     if (suffixPattern == null) {
-      suffixPattern = DEFAULT_SUFFIX_PATTERN;
+      ConverterOptions<StructuredDataOption> options = new ConverterOptions<StructuredDataOption>();
+      options.add(StructuredDataOption.LEADING_SPACE, false);
+      options.add(StructuredDataOption.TRAILING_SPACE, true);
+      options.add(StructuredDataOption.DEFAULT_ID, getStructuredDataId());
+      options.add(StructuredDataOption.INCLUDE_MDC, isMdcIncluded());
+      suffixPattern = "%SD{" + options.toString() + "}%SD{Message}";
     }
-
     fullLayout.setPattern(prefixPattern + suffixPattern);
     fullLayout.setContext(getContext());
     fullLayout.start();
@@ -91,5 +104,38 @@ public class SyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
       }
       tp = tp.getCause();
     }
+  }
+
+
+  public String getAppName() {
+    return appName;
+  }
+
+  public void setAppName(String appName) {
+    this.appName = appName;
+  }
+
+  public String getMessageId() {
+    return messageId;
+  }
+
+  public void setMessageId(String messageId) {
+    this.messageId = messageId;
+  }
+
+  public String getStructuredDataId() {
+    return structuredDataId;
+  }
+
+  public void setStructuredDataId(String structuredDataId) {
+    this.structuredDataId = structuredDataId;
+  }
+
+  public boolean isMdcIncluded() {
+    return mdcIncluded;
+  }
+
+  public void setMdcIncluded(boolean mdcIncluded) {
+    this.mdcIncluded = mdcIncluded;
   }
 }

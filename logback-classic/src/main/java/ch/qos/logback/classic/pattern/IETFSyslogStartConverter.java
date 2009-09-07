@@ -11,22 +11,26 @@ package ch.qos.logback.classic.pattern;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.text.DateFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
+import java.util.Map;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.util.LevelToSyslogSeverity;
 import ch.qos.logback.core.net.SyslogAppenderBase;
+import ch.qos.logback.core.CoreConstants;
+import org.slf4j.StructuredData;
 
-public class SyslogStartConverter extends ClassicConverter {
+public class IETFSyslogStartConverter extends ClassicConverter {
 
   long lastTimestamp = -1;
   String timesmapStr = null;
   SimpleDateFormat simpleFormat;
   String localHostName;
   int facility;
+
+  String appName;
+  String messageId;
 
   public void start() {
     int errorCount = 0;
@@ -36,13 +40,24 @@ public class SyslogStartConverter extends ClassicConverter {
       addError("was expecting a facility string as an option");
       return;
     }
-
     facility = SyslogAppenderBase.facilityStringToint(facilityStr);
+
+    Map<SyslogOption, String> options = ConverterOptions.getOptions(SyslogOption.class, getOptionList());
+
+    for (Map.Entry<SyslogOption, String> entry : options.entrySet()) {
+      switch (entry.getKey()) {
+        case APPNAME:
+          appName = entry.getValue();
+          break;
+        case MESSAGEID:
+          messageId = entry.getValue();
+          break;
+      }
+    }
 
     localHostName = getLocalHostname();
     try {
-      // hours should be in 0-23, see also http://jira.qos.ch/browse/LBCLASSIC-48
-      simpleFormat = new SimpleDateFormat("MMM dd HH:mm:ss", new DateFormatSymbols(Locale.US));
+      simpleFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS000Z");
     } catch (IllegalArgumentException e) {
       addError("Could not instantiate SimpleDateFormat", e);
       errorCount++;
@@ -60,13 +75,46 @@ public class SyslogStartConverter extends ClassicConverter {
 
     sb.append("<");
     sb.append(pri);
-    sb.append(">");
+    sb.append(">1 ");
     sb.append(computeTimeStampString(event.getTimeStamp()));
     sb.append(' ');
     sb.append(localHostName);
     sb.append(' ');
-
+    if (appName != null) {
+      sb.append(appName);
+    } else if (event.getLoggerContextVO().getName() != null) {
+      sb.append(event.getLoggerContextVO().getName());
+    } else {
+      sb.append("-");
+    }
+    sb.append(" ");
+    sb.append(getProcId());
+    sb.append(" ");
+    Object[] args = event.getArgumentArray();
+    if (args != null && args.length == 1 && args[0] instanceof StructuredData) {
+      sb.append(((StructuredData) args[0]).getType());
+    } else if (messageId != null) {
+      sb.append(messageId);
+    } else {
+      StackTraceElement[] cda = event.getCallerData();
+      if (cda != null && cda.length > 0) {
+        String fqClassName = cda[0].getClassName();
+        int lastIndex = fqClassName.lastIndexOf(CoreConstants.DOT);
+        if (lastIndex != -1) {
+          sb.append(fqClassName.substring(lastIndex + 1, fqClassName.length()));
+        } else {
+          sb.append(fqClassName);
+        }
+      } else {
+        sb.append("-");
+      }
+    }
+    sb.append(" ");
     return sb.toString();
+  }
+
+  String getProcId() {
+    return "-";
   }
 
   /**
