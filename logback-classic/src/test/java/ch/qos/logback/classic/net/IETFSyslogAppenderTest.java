@@ -82,7 +82,7 @@ public class IETFSyslogAppenderTest {
         + (SyslogConstants.LOG_MAIL + SyslogConstants.DEBUG_SEVERITY) + ">";
     assertTrue(msg.startsWith(expected));
 
-    String first = "<\\d{2}>1 \\w{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}\\.\\d{6}[\\S]* [\\w.-]* [\\w.-]* - [\\w.-]* ";
+    String first = "<\\d{2}>1 \\w{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}\\.\\d{1,3}[\\S]* [\\w.-]* [\\w.-]* - [\\w.-]* ";
     checkRegexMatch(msg, first + "\\[" + threadName + "\\] " + loggerName
         + " " + logMsg);
   }
@@ -137,7 +137,7 @@ public class IETFSyslogAppenderTest {
         + (SyslogConstants.LOG_LOCAL0 + SyslogConstants.INFO_SEVERITY) + ">";
     assertTrue(msg.startsWith(expected));
 
-    String first = "<\\d{3}>1 \\w{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}\\.\\d{6}[\\S]* [\\w.-]* [\\w.-]* - [\\w.-]* ";
+    String first = "<\\d{3}>1 \\w{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}\\.\\d{1,3}[\\S]* [\\w.-]* [\\w.-]* - [\\w.-]* ";
     checkRegexMatch(msg, first + "\\[" + sdId + "( [\\w.-]*=\"[\\w.-]*\")*\\] " + data.getMessage());
   }
 

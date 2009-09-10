@@ -12,8 +12,10 @@ package ch.qos.logback.classic.pattern;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.text.DecimalFormat;
 import java.util.Map;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.util.LevelToSyslogSeverity;
@@ -22,6 +24,9 @@ import ch.qos.logback.core.CoreConstants;
 import org.slf4j.StructuredData;
 
 public class IETFSyslogStartConverter extends ClassicConverter {
+
+  private static final DecimalFormat TWO_DIGIT = new DecimalFormat("00");
+  private static final DecimalFormat FOUR_DIGIT = new DecimalFormat("0000");
 
   long lastTimestamp = -1;
   String timesmapStr = null;
@@ -57,7 +62,7 @@ public class IETFSyslogStartConverter extends ClassicConverter {
 
     localHostName = getLocalHostname();
     try {
-      simpleFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS000Z");
+      simpleFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     } catch (IllegalArgumentException e) {
       addError("Could not instantiate SimpleDateFormat", e);
       errorCount++;
@@ -137,7 +142,43 @@ public class IETFSyslogStartConverter extends ClassicConverter {
     synchronized (this) {
       if (now != lastTimestamp) {
         lastTimestamp = now;
-        timesmapStr = simpleFormat.format(new Date(now));
+        StringBuilder buf = new StringBuilder();
+        Calendar cal = new GregorianCalendar();
+        cal.setTimeInMillis(now);
+        buf.append(FOUR_DIGIT.format(cal.get(Calendar.YEAR)));
+        buf.append("-");
+        buf.append(TWO_DIGIT.format(cal.get(Calendar.MONTH) + 1));
+        buf.append("-");
+        buf.append(TWO_DIGIT.format(cal.get(Calendar.DAY_OF_MONTH)));
+        buf.append("T");
+        buf.append(TWO_DIGIT.format(cal.get(Calendar.HOUR_OF_DAY)));
+        buf.append(":");
+        buf.append(TWO_DIGIT.format(cal.get(Calendar.MINUTE)));
+        buf.append(":");
+        buf.append(TWO_DIGIT.format(cal.get(Calendar.SECOND)));
+
+        int millis = cal.get(Calendar.MILLISECOND);
+        if (millis != 0) {
+          buf.append(".").append((int) ((float) millis / 10F));
+        }
+
+        int tzmin = (cal.get(Calendar.ZONE_OFFSET) + cal.get(Calendar.DST_OFFSET)) / 60000;
+        if (tzmin == 0) {
+          buf.append("Z");
+        } else {
+          if (tzmin < 0) {
+            tzmin = -tzmin;
+            buf.append("-");
+          } else {
+            buf.append("+");
+          }
+          int tzhour = tzmin / 60;
+          tzmin -= tzhour * 60;
+          buf.append(TWO_DIGIT.format(tzhour));
+          buf.append(":");
+          buf.append(TWO_DIGIT.format(tzmin));
+        }
+        timesmapStr = buf.toString();
       }
       return timesmapStr;
     }
