@@ -24,6 +24,7 @@ import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.net.SyslogAppenderBase;
 import ch.qos.logback.core.net.SyslogWriter;
+import org.slf4j.StructuredData;
 
 /**
  * This appender can be used to send messages to a remote syslog daemon. <p> For
@@ -33,12 +34,15 @@ import ch.qos.logback.core.net.SyslogWriter;
  * @author Ceki G&uumllc&uuml;
  */
 public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
+  public static final String DEFAULT_SUFFIX_PATTERN = "[%thread] %logger %msg";
   String appName;
   String messageId;
   String structuredDataId;
   boolean mdcIncluded;
 
   PatternLayout prefixLayout = new PatternLayout();
+  PatternLayout structuredLayout;
+  PatternLayout defaultLayout;
 
   public Layout<ILoggingEvent> buildLayout(String facilityStr) {
     ConverterOptions<SyslogOption> syslogOptions = new ConverterOptions<SyslogOption>(facilityStr);
@@ -53,9 +57,11 @@ public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
     prefixLayout.setContext(getContext());
     prefixLayout.start();
 
-    PatternLayout fullLayout = new PatternLayout();
+    structuredLayout = new PatternLayout();
+    defaultLayout = new PatternLayout();
 
-    fullLayout.getInstanceConverterMap().put("syslogStart", IETFSyslogStartConverter.class.getName());
+    structuredLayout.getInstanceConverterMap().put("syslogStart", IETFSyslogStartConverter.class.getName());
+    defaultLayout.getInstanceConverterMap().put("syslogStart", IETFSyslogStartConverter.class.getName());
 
     if (suffixPattern == null) {
       ConverterOptions<StructuredDataOption> options = new ConverterOptions<StructuredDataOption>();
@@ -64,11 +70,26 @@ public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
       options.add(StructuredDataOption.DEFAULT_ID, getStructuredDataId());
       options.add(StructuredDataOption.INCLUDE_MDC, isMdcIncluded());
       suffixPattern = "%SD{" + options.toString() + "}%SD{Message}";
+      defaultLayout.setPattern(prefixPattern + DEFAULT_SUFFIX_PATTERN);
+    } else {
+      defaultLayout.setPattern(prefixPattern + suffixPattern);
     }
-    fullLayout.setPattern(prefixPattern + suffixPattern);
-    fullLayout.setContext(getContext());
-    fullLayout.start();
-    return fullLayout;
+    structuredLayout.setPattern(prefixPattern + suffixPattern);
+    structuredLayout.setContext(getContext());
+    structuredLayout.start();
+     
+    defaultLayout.setContext(getContext());
+    defaultLayout.start();
+
+    return defaultLayout;
+  }
+
+  protected Layout<ILoggingEvent> getLayout(ILoggingEvent event) {
+    Object[] args = event.getArgumentArray();
+    if (args != null && args.length == 1 && args[0] instanceof StructuredData) {
+      return structuredLayout;
+    }
+    return defaultLayout;
   }
 
   /*
