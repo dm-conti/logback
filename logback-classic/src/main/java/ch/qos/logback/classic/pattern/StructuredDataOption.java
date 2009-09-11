@@ -10,8 +10,8 @@
 package ch.qos.logback.classic.pattern;
 
 /**
- * Options passed from the SyslogAppender to its Converter.
+ * Options passed from the StructuredDataConverter.
  */
 public enum StructuredDataOption {
-  LEADING_SPACE, TRAILING_SPACE, FORMAT, INCLUDE_MDC, DEFAULT_ID 
+  LEADING_SPACE, TRAILING_SPACE, FORMAT, INCLUDE_MDC, DEFAULT_ID, HIDE_NIL 
 }

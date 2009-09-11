@@ -27,11 +27,11 @@ import ch.qos.logback.core.net.SyslogWriter;
 import org.slf4j.StructuredData;
 
 /**
- * This appender can be used to send messages to a remote syslog daemon. <p> For
- * more information about this appender, please refer to the online manual at
- * http://logback.qos.ch/manual/appenders.html#SyslogAppender
+ * This appender can be used to send messages to a remote syslog daemon in IETF Syslog format (RFC 5424).
+ * <p> For more information about this appender, please refer to the online manual at
+ * http://logback.qos.ch/manual/appenders.html#IETFSyslogAppender
  *
- * @author Ceki G&uumllc&uuml;
+ * @author Ralph Goers
  */
 public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
   public static final String DEFAULT_SUFFIX_PATTERN = "[%thread] %logger %msg";
@@ -49,7 +49,12 @@ public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
     syslogOptions.add(SyslogOption.APPNAME, getAppName());
     syslogOptions.add(SyslogOption.MESSAGEID, getMessageId());
 
-    String prefixPattern = "%syslogStart{" + syslogOptions.toString() + "}%nopex";
+    ConverterOptions<StructuredDataOption> sdOptions = new ConverterOptions<StructuredDataOption>();
+    sdOptions.add(StructuredDataOption.TRAILING_SPACE, true);
+    sdOptions.add(StructuredDataOption.DEFAULT_ID, getStructuredDataId());
+    sdOptions.add(StructuredDataOption.INCLUDE_MDC, isMdcIncluded());
+
+    String prefixPattern = "%syslogStart{" + syslogOptions.toString() + "}%SD{" + sdOptions.toString() + "}%nopex";
 
     prefixLayout.getInstanceConverterMap().put("syslogStart", IETFSyslogStartConverter.class.getName());
 
@@ -64,12 +69,7 @@ public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
     defaultLayout.getInstanceConverterMap().put("syslogStart", IETFSyslogStartConverter.class.getName());
 
     if (suffixPattern == null) {
-      ConverterOptions<StructuredDataOption> options = new ConverterOptions<StructuredDataOption>();
-      options.add(StructuredDataOption.LEADING_SPACE, false);
-      options.add(StructuredDataOption.TRAILING_SPACE, true);
-      options.add(StructuredDataOption.DEFAULT_ID, getStructuredDataId());
-      options.add(StructuredDataOption.INCLUDE_MDC, isMdcIncluded());
-      suffixPattern = "%SD{" + options.toString() + "}%SD{Message}";
+      suffixPattern = "%SD{Message}";
       defaultLayout.setPattern(prefixPattern + DEFAULT_SUFFIX_PATTERN);
     } else {
       defaultLayout.setPattern(prefixPattern + suffixPattern);
@@ -77,7 +77,7 @@ public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
     structuredLayout.setPattern(prefixPattern + suffixPattern);
     structuredLayout.setContext(getContext());
     structuredLayout.start();
-     
+
     defaultLayout.setContext(getContext());
     defaultLayout.start();
 

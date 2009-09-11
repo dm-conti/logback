@@ -87,6 +87,51 @@ public class IETFSyslogAppenderTest {
         + " " + logMsg);
   }
 
+    @Test
+  public void formatMessage() throws InterruptedException {
+    int port = RandomUtil.getRandomServerPort();
+
+    MockSyslogServer mockServer = new MockSyslogServer(1, port);
+    mockServer.start();
+    // give MockSyslogServer head start
+    Thread.sleep(100);
+
+    LoggerContext lc = new LoggerContext();
+    lc.setName("test");
+    IETFSyslogAppender sa = new IETFSyslogAppender();
+    sa.setContext(lc);
+    sa.setSyslogHost("localhost");
+    sa.setFacility("MAIL");
+    sa.setPort(port);
+    sa.setAppName("SyslogAppenderTest");
+    sa.setMessageId("Test001");
+    sa.start();
+    assertTrue(sa.isStarted());
+
+    String loggerName = this.getClass().getName();
+    Logger logger = lc.getLogger(loggerName);
+    logger.addAppender(sa);
+    StructuredData data = new StructuredDataImpl(null, "Hello, ${Name}", null);
+    data.getData().put("Name", "John Smith");
+    logger.debug("", data);
+
+    // wait max 2 seconds for mock server to finish. However, it should
+    // much sooner than that.
+    mockServer.join(8000);
+    assertTrue(mockServer.isFinished());
+    assertEquals(1, mockServer.getMessageList().size());
+    String msg = mockServer.getMessageList().get(0);
+
+    String threadName = Thread.currentThread().getName();
+
+    String expected = "<"
+        + (SyslogConstants.LOG_MAIL + SyslogConstants.DEBUG_SEVERITY) + ">";
+    assertTrue(msg.startsWith(expected));
+
+    String first = "<\\d{2}>1 \\w{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}\\.\\d{1,3}[\\S]* [\\w.-]* [\\w.-]* - [\\w.-]* - ";
+    checkRegexMatch(msg, first + "Hello, John Smith");
+  }
+
   @Test
   public void RFC5424_Event() throws InterruptedException {
     int port = RandomUtil.getRandomServerPort();

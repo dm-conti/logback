@@ -96,26 +96,23 @@ public class IETFSyslogStartConverter extends ClassicConverter {
     sb.append(getProcId());
     sb.append(" ");
     Object[] args = event.getArgumentArray();
-    if (args != null && args.length == 1 && args[0] instanceof StructuredData) {
-      sb.append(((StructuredData) args[0]).getType());
+    String type = getStructuredType(args);
+    if (type != null) {
+      sb.append(type);
     } else if (messageId != null) {
       sb.append(messageId);
     } else {
-      StackTraceElement[] cda = event.getCallerData();
-      if (cda != null && cda.length > 0) {
-        String fqClassName = cda[0].getClassName();
-        int lastIndex = fqClassName.lastIndexOf(CoreConstants.DOT);
-        if (lastIndex != -1) {
-          sb.append(fqClassName.substring(lastIndex + 1, fqClassName.length()));
-        } else {
-          sb.append(fqClassName);
-        }
-      } else {
-        sb.append("-");
-      }
+      sb.append("-");
     }
     sb.append(" ");
     return sb.toString();
+  }
+
+  private String getStructuredType(Object[] args) {
+    if (args == null || args.length != 1 || !(args[0] instanceof StructuredData)) {
+      return null;
+    }
+    return ((StructuredData) args[0]).getType();
   }
 
   String getProcId() {

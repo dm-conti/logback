@@ -3,9 +3,23 @@ package ch.qos.logback.classic.pattern;
 import java.util.Map;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.spi.PropertyContainer;
+import ch.qos.logback.core.util.OptionHelper;
 import org.slf4j.StructuredData;
 import org.slf4j.MDC;
 
+/**
+ * Converts StructuredData into various formats:
+ * 1. Structured Data that conforms to RFC 5424.
+ * 2. Individual StructuredData fields
+ * 3. Formats the message inserting data items by key name. For example:
+ * StructuredData data = new StructuredDataImpl(null, "Hello, ${Name}", null);
+ * data.getData().put("Name", "John Smith");
+ *
+ * and %SD{Message}% will result in
+ *
+ * "Hello, John Smith"
+ */
 public class StructuredDataConverter extends ClassicConverter {
 
   String key;
@@ -14,7 +28,9 @@ public class StructuredDataConverter extends ClassicConverter {
   boolean leadingSpace;
   boolean trailingSpace;
   boolean includeMDC;
+  boolean hideNil;
   protected static final String EMPTY_STRING = "";
+  protected static final String NIL_STRING = "-";
   public static final String ID ="Id";
   public static final String MESSAGE = "Message";
   public static final String TYPE = "Type";
@@ -43,6 +59,9 @@ public class StructuredDataConverter extends ClassicConverter {
         case INCLUDE_MDC:
           includeMDC = Boolean.parseBoolean(entry.getValue());
           break;
+        case HIDE_NIL:
+          hideNil = Boolean.parseBoolean(entry.getValue());
+          break;
       }
     }
     super.start();
@@ -69,26 +88,27 @@ public class StructuredDataConverter extends ClassicConverter {
       if (includeMDC) {
         maps = new Map[] { MDC.getCopyOfContextMap() };
       }
+      StringBuilder sb = new StringBuilder();
       String str = data.asString(format, defaultId, maps);
       if (str != null && str.length() > 0) {
-        StringBuilder sb = new StringBuilder();
         if (leadingSpace) {
           sb.append(" ");
         }
         sb.append(str);
-        if (trailingSpace) {
-          sb.append(" ");
-        }
-        return sb.toString();
+      } else if (!hideNil){
+        sb.append(NIL_STRING);
       }
-      return EMPTY_STRING;
+      if (trailingSpace) {
+        sb.append(" ");
+      }
+      return sb.toString();
     }
 
     String msg = null;
-    if (key.equalsIgnoreCase(ID)) {
+    if (key.equalsIgnoreCase(MESSAGE)) {
+      msg = OptionHelper.substVars(data.getMessage(), new SDContainer(data));
+    } else if (key.equalsIgnoreCase(ID)) {
       msg = data.getId();
-    } else if (key.equalsIgnoreCase(MESSAGE)) {
-      msg = data.getMessage();
     } else if (key.equalsIgnoreCase(TYPE)) {
       msg = data.getType();
     } else {
@@ -98,5 +118,25 @@ public class StructuredDataConverter extends ClassicConverter {
       }
     }
     return msg == null ? EMPTY_STRING : msg;
+  }
+
+  private class SDContainer implements PropertyContainer
+  {
+    private final StructuredData data;
+
+    public SDContainer(StructuredData data) {
+      this.data = data;
+    }
+
+    public String getProperty(String key) {
+      String value = data.getData().get(key).toString();
+      if (value != null) {
+        return value;
+      }
+      if (includeMDC) {
+        value = MDC.get(key);
+      }
+      return value;
+    }
   }
 }
