@@ -25,6 +25,7 @@ public class StructuredDataConverter extends ClassicConverter {
   String key;
   String format;
   String defaultId;
+  int enterpriseNumber = StructuredData.Id.RESERVED;
   boolean leadingSpace;
   boolean trailingSpace;
   boolean includeMDC;
@@ -49,6 +50,9 @@ public class StructuredDataConverter extends ClassicConverter {
           break;
         case DEFAULT_ID:
           defaultId = entry.getValue();
+          break;
+        case ENTERPRISE_NUMBER:
+          enterpriseNumber = Integer.parseInt(entry.getValue());
           break;
         case LEADING_SPACE:
           leadingSpace = Boolean.parseBoolean(entry.getValue());
@@ -89,7 +93,15 @@ public class StructuredDataConverter extends ClassicConverter {
         maps = new Map[] { MDC.getCopyOfContextMap() };
       }
       StringBuilder sb = new StringBuilder();
-      String str = data.asString(format, defaultId, maps);
+      StructuredData.Id id = data.getId();
+      if (id == null) {
+        if (defaultId != null) {
+          id = new StructuredData.Id(defaultId, enterpriseNumber, null, null);  
+        }
+      } else {
+        id = id.makeId(defaultId, enterpriseNumber);
+      }
+      String str = data.asString(format, id, maps);
       if (str != null && str.length() > 0) {
         if (leadingSpace) {
           sb.append(" ");
@@ -108,7 +120,7 @@ public class StructuredDataConverter extends ClassicConverter {
     if (key.equalsIgnoreCase(MESSAGE)) {
       msg = OptionHelper.substVars(data.getMessage(), new SDContainer(data));
     } else if (key.equalsIgnoreCase(ID)) {
-      msg = data.getId();
+      msg = data.getId().toString();
     } else if (key.equalsIgnoreCase(TYPE)) {
       msg = data.getType();
     } else {

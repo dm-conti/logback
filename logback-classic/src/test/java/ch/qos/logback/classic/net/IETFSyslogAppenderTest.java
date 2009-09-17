@@ -17,10 +17,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.MDC;
 import org.slf4j.StructuredData;
+import org.slf4j.StructuredDataImpl;
 import org.slf4j.impl.StaticLoggerBinder;
 import org.slf4j.impl.StaticLoggerBinderFriend;
 import org.slf4j.ext.EventLogger;
-import org.slf4j.ext.StructuredDataImpl;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
@@ -111,13 +111,14 @@ public class IETFSyslogAppenderTest {
     String loggerName = this.getClass().getName();
     Logger logger = lc.getLogger(loggerName);
     logger.addAppender(sa);
-    StructuredData data = new StructuredDataImpl(null, "Hello, ${Name}", null);
+    StructuredData data = new StructuredDataImpl((String) null, "Hello, ${Name}", null);
     data.getData().put("Name", "John Smith");
     logger.debug("", data);
 
     // wait max 2 seconds for mock server to finish. However, it should
     // much sooner than that.
     mockServer.join(8000);
+     StatusPrinter.print(lc);
     assertTrue(mockServer.isFinished());
     assertEquals(1, mockServer.getMessageList().size());
     String msg = mockServer.getMessageList().get(0);
@@ -151,7 +152,7 @@ public class IETFSyslogAppenderTest {
     sa.setPort(port);
     sa.setAppName("Banking");
     // Valid id's are a) reseverd (no '@') or b) of the form mysid@EnterpriseNumber.
-    String sdId = "Event@18060";
+    StructuredData.Id sdId = new StructuredData.Id("Event", 18060, null, null);
     //sa.setStructuredDataId(sdId);
     sa.setMdcIncluded(true);
     sa.start();

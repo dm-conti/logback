@@ -38,6 +38,7 @@ public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
   String appName;
   String messageId;
   String structuredDataId;
+  String enterpriseNumber;
   boolean mdcIncluded;
 
   PatternLayout prefixLayout = new PatternLayout();
@@ -51,7 +52,10 @@ public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
 
     ConverterOptions<StructuredDataOption> sdOptions = new ConverterOptions<StructuredDataOption>();
     sdOptions.add(StructuredDataOption.TRAILING_SPACE, true);
-    sdOptions.add(StructuredDataOption.DEFAULT_ID, getStructuredDataId());
+    if (structuredDataId != null) {
+      sdOptions.add(StructuredDataOption.DEFAULT_ID, getStructuredDataId());
+    }
+    sdOptions.add(StructuredDataOption.ENTERPRISE_NUMBER, getEnterpriseNumber());
     sdOptions.add(StructuredDataOption.INCLUDE_MDC, isMdcIncluded());
 
     String prefixPattern = "%syslogStart{" + syslogOptions.toString() + "}%SD{" + sdOptions.toString() + "}%nopex";
@@ -150,6 +154,14 @@ public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
 
   public void setStructuredDataId(String structuredDataId) {
     this.structuredDataId = structuredDataId;
+  }
+
+  public String getEnterpriseNumber() {
+    return enterpriseNumber;
+  }
+
+  public void setEnterpriseNumber(String enterpriseNumber) {
+    this.enterpriseNumber = enterpriseNumber;
   }
 
   public boolean isMdcIncluded() {
