@@ -119,16 +119,6 @@
 		</dependency>
     </dependencies>
   </dependencyManagement>
-
-  <profiles>
-    <profile>
-      <id>testSkip</id>
-      <properties>
-        <maven.test.skip>true</maven.test.skip>
-      </properties>
-    </profile>
-  </profiles>
-
   <build>
     <extensions>
       <extension>
@@ -191,7 +181,6 @@
           <outputDirectory>target/site/dist/</outputDirectory>
         </configuration>
       </plugin>
-
     </plugins>
   </build>
 
@@ -282,6 +271,9 @@
   </ciManagement>
   -->
 
+
+
+
   <distributionManagement>
     <site>
       <id>pixie</id>
@@ -300,8 +292,55 @@
 
   </distributionManagement>
 
+  <profiles>
+    <profile>
+      <id>testSkip</id>
+      <properties>
+        <maven.test.skip>true</maven.test.skip>
+      </properties>
+    </profile>
+    <profile>
+      <id>license</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.google.code.maven-license-plugin</groupId>
+            <artifactId>maven-license-plugin</artifactId>
+            <configuration>
+              <header>src/main/licenseHeader.txt</header>
+              <quiet>false</quiet>
+              <failIfMissing>true</failIfMissing>
+              <aggregate>true</aggregate>
+              <includes>
+                <include>src/**/*.java</include>
+              </includes>
+              <useDefaultExcludes>true</useDefaultExcludes>
+              <useDefaultMapping>true</useDefaultMapping>
+              <properties>
+                <year>1999</year>
+              </properties>
+              <headerDefinitions>
+                <headerDefinition>src/main/javadocHeaders.xml</headerDefinition>
+              </headerDefinitions>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
 
-
-
+      <pluginRepositories>
+        <pluginRepository>
+          <id>mc-release</id>
+          <name>Local Maven repository of releases</name>
+          <url>http://mc-repo.googlecode.com/svn/maven2/releases</url>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+        </pluginRepository>
+      </pluginRepositories>
+   </profile>
+ </profiles>
 
 </project>

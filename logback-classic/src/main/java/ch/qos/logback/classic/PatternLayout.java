@@ -1,11 +1,15 @@
 /**
- * Logback: the generic, reliable, fast and flexible logging framework.
+ * Logback: the reliable, generic, fast and flexible logging framework.
+ * Copyright (C) 1999-2009, QOS.ch. All rights reserved.
  *
- * Copyright (C) 2000-2009, QOS.ch
+ * This program and the accompanying materials are dual-licensed under
+ * either the terms of the Eclipse Public License v1.0 as published by
+ * the Eclipse Foundation
  *
- * This library is free software, you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation.
+ *   or (per the licensee's choosing)
+ *
+ * under the terms of the GNU Lesser General Public License version 2.1
+ * as published by the Free Software Foundation.
  */
 package ch.qos.logback.classic;
 
@@ -93,7 +97,7 @@ public class PatternLayout extends PatternLayoutBase<ILoggingEvent> {
     defaultConverterMap.put("mdc", MDCConverter.class.getName());
 
     defaultConverterMap.put("SD", StructuredDataConverter.class.getName());
-    defaultConverterMap.put("structuredData", StructuredDataConverter.class.getName());    
+    defaultConverterMap.put("structuredData", StructuredDataConverter.class.getName());
 
     defaultConverterMap.put("ex", ThrowableProxyConverter.class.getName());
     defaultConverterMap.put("exception", ThrowableProxyConverter.class
