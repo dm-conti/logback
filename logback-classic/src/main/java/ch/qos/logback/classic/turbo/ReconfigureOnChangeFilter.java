@@ -28,9 +28,9 @@ import ch.qos.logback.core.spi.FilterReply;
 
 /**
  * Reconfigure a LoggerContext when the configuration file changes.
- * 
+ *
  * @author Ceki Gulcu
- * 
+ *
  */
 public class ReconfigureOnChangeFilter extends TurboFilter {
 
@@ -55,7 +55,7 @@ public class ReconfigureOnChangeFilter extends TurboFilter {
     if (url != null) {
       fileToScan = convertToFile(url);
       if (fileToScan != null) {
-        synchronized (context) {
+        synchronized (this) {
           long inSeconds = refreshPeriod / 1000;
           addInfo("Will scan for changes in file [" + fileToScan + "] every "
               + inSeconds + " seconds. ");
@@ -72,8 +72,7 @@ public class ReconfigureOnChangeFilter extends TurboFilter {
   File convertToFile(URL url) {
     String protocol = url.getProtocol();
     if ("file".equals(protocol)) {
-      File file = new File(url.getFile());
-      return file;
+      return new File(url.getFile());
     } else {
       addError("URL [" + url + "] is not of type file");
       return null;
@@ -100,14 +99,15 @@ public class ReconfigureOnChangeFilter extends TurboFilter {
       return FilterReply.NEUTRAL;
     }
 
-    synchronized (context) {
-      boolean changed = changeDetected();
-      if (changed) {
-        addInfo("Detected change in [" + fileToScan + "]");
-        addInfo("Resetting and reconfiguring context [" + context.getName()
-            + "]");
-        reconfigure();
-      }
+    boolean changed;
+    long now = System.currentTimeMillis();
+
+    synchronized (this) {
+      changed = changeDetected(now);
+    }
+
+    if (changed) {
+      new ReconfigureThread().start();
     }
     return FilterReply.NEUTRAL;
   }
@@ -122,8 +122,7 @@ public class ReconfigureOnChangeFilter extends TurboFilter {
 //  }
 
   // This method is synchronized to prevent near-simultaneous re-configurations
-  protected boolean changeDetected() {
-    long now = System.currentTimeMillis();
+  protected boolean changeDetected(long now) {
     if (now >= nextCheck) {
       updateNextCheck(now);
       return (lastModified != fileToScan.lastModified() && lastModified != SENTINEL);
@@ -139,30 +138,35 @@ public class ReconfigureOnChangeFilter extends TurboFilter {
     lastModified = SENTINEL;
   }
 
-  protected void reconfigure() {
-    // Even though this method resets the loggerContext, which clears the list
-    // of turbo filters including this instance, it is still possible for this
-    // instance to be subsequently invoked by another thread if it was already
-    // executing when the context was reset.
-    // We prevent multiple reconfigurations (for the same file change event) by
-    // setting an appropriate sentinel value for lastMofidied field.
-    disableSubsequentRecofiguration();
-    JoranConfigurator jc = new JoranConfigurator();
-    jc.setContext(context);
-    LoggerContext lc = (LoggerContext) context;
-    lc.reset();
-    try {
-      jc.doConfigure(fileToScan);
-    } catch (JoranException e) {
-      addError("Failure during reconfiguration", e);
-    }
-  }
-
   public long getRefreshPeriod() {
     return refreshPeriod;
   }
 
   public void setRefreshPeriod(long refreshPeriod) {
     this.refreshPeriod = refreshPeriod;
+  }
+
+  private class ReconfigureThread extends Thread {
+    public void run() {
+      // Even though this method resets the loggerContext, which clears the list
+      // of turbo filters including this instance, it is still possible for this
+      // instance to be subsequently invoked by another thread if it was already
+      // executing when the context was reset.
+      // We prevent multiple reconfigurations (for the same file change event) by
+      // setting an appropriate sentinel value for lastMofidied field.
+      disableSubsequentRecofiguration();
+      addInfo("Detected change in [" + fileToScan + "]");
+      addInfo("Resetting and reconfiguring context [" + context.getName()
+            + "]");
+      JoranConfigurator jc = new JoranConfigurator();
+      jc.setContext(context);
+      LoggerContext lc = (LoggerContext) context;
+      lc.reset();
+      try {
+        jc.doConfigure(fileToScan);
+      } catch (JoranException e) {
+        addError("Failure during reconfiguration", e);
+      }
+    }
   }
 }

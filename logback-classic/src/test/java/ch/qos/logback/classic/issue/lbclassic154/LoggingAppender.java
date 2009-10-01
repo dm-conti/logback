@@ -1,12 +1,26 @@
 package ch.qos.logback.classic.issue.lbclassic154;
 
+import ch.qos.logback.core.AppenderBase;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+
+
 /**
- * Created by IntelliJ IDEA.
- * User: rgoers
- * Date: Sep 28, 2009
- * Time: 2:11:07 PM
- * To change this template use File | Settings | File Templates.
+ *
  */
-public class LoggingAppender
+public class LoggingAppender extends AppenderBase<ILoggingEvent>
 {
+    Logger logger;
+
+    public void start()
+    {
+        super.start();
+        logger = ((LoggerContext)getContext()).getLogger("Ignore");
+    }
+
+    protected void append(ILoggingEvent eventObject)
+    {
+        logger.debug("Ignore this");
+    }
 }

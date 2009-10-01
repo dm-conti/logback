@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE configuration>
+<!--<!DOCTYPE configuration> -->
 
 <configuration scan="true" scanPeriod="50 millisecond">
-  <root level="ERROR"/>  
-</configuration> 
-       
+  <appender name="default" class="ch.qos.logback.classic.issue.lbclassic154.LoggingAppender">
+    <layout class="ch.qos.logback.classic.PatternLayout">
+	  <pattern>%msg%n"</pattern>
+	</layout>
+  </appender>
+
+  <logger name="Ignore" level="ERROR" additivity="false"/>
+
+  <root level="INFO">
+    <appender-ref ref="default"/>
+  </root>
+</configuration>
