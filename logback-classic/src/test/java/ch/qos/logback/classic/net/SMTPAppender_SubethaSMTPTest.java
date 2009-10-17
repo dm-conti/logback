@@ -191,7 +191,6 @@ public class SMTPAppender_SubethaSMTPTest {
       return;
     }
     smtpAppender.setLayout(buildHTMLLayout(lc));
-    smtpAppender.setTimeout(5000);
     smtpAppender.start();
     Logger logger = lc.getLogger("test");
     logger.addAppender(smtpAppender);

@@ -78,6 +78,10 @@ public class IETFSyslogAppenderTest {
 
     String threadName = Thread.currentThread().getName();
 
+    int index = msg.indexOf(" ");
+    int length = Integer.parseInt(msg.substring(0, index));
+    assertTrue("Invalid message length", length > 0);
+    msg = msg.substring(index+1);
     String expected = "<"
         + (SyslogConstants.LOG_MAIL + SyslogConstants.DEBUG_SEVERITY) + ">";
     assertTrue(msg.startsWith(expected));
@@ -123,7 +127,10 @@ public class IETFSyslogAppenderTest {
     assertEquals(1, mockServer.getMessageList().size());
     String msg = mockServer.getMessageList().get(0);
 
-    String threadName = Thread.currentThread().getName();
+    int index = msg.indexOf(" ");
+    int length = Integer.parseInt(msg.substring(0, index));
+    assertTrue("Invalid message length", length > 0);
+    msg = msg.substring(index+1);
 
     String expected = "<"
         + (SyslogConstants.LOG_MAIL + SyslogConstants.DEBUG_SEVERITY) + ">";
@@ -178,6 +185,11 @@ public class IETFSyslogAppenderTest {
     assertTrue(mockServer.isFinished());
     assertEquals(1, mockServer.getMessageList().size());
     String msg = mockServer.getMessageList().get(0);
+
+    int index = msg.indexOf(" ");
+    int length = Integer.parseInt(msg.substring(0, index));
+    assertTrue("Invalid message length", length > 0);
+    msg = msg.substring(index+1);
 
     String expected = "<"
         + (SyslogConstants.LOG_LOCAL0 + SyslogConstants.INFO_SEVERITY) + ">";
