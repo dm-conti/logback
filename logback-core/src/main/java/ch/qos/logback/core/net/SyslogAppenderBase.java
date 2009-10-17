@@ -34,10 +34,10 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
   final static int MSG_SIZE_LIMIT = 256*1024;
 
   String facilityStr;
-  String syslogHost;
+  protected String syslogHost;
   protected String suffixPattern;
   SyslogWriter sw;
-  int port = SyslogConstants.SYSLOG_PORT;
+  protected int port = SyslogConstants.SYSLOG_PORT;
 
   public void start() {
     int errorCount = 0;
@@ -47,7 +47,7 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
     }
 
     try {
-      sw = new SyslogWriter(syslogHost, port);
+      sw = getWriter();
     } catch (UnknownHostException e) {
       addError("Could not create SyslogWriter", e);
       errorCount++;
@@ -63,6 +63,10 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
     if (errorCount == 0) {
       super.start();
     }
+  }
+
+  public SyslogWriter getWriter() throws UnknownHostException, SocketException {
+    return new SyslogWriter(syslogHost, port);
   }
 
   abstract public Layout<E> buildLayout(String facilityStr);
@@ -239,7 +243,7 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
    * The <b>suffixPattern</b> option specifies the fortmat of the
    * non-standardized part the message sent to the syslog server.
    *
-   * @param pattern
+   * @param suffixPattern The suffix pattern
    */
   public void setSuffixPattern(String suffixPattern) {
     this.suffixPattern = suffixPattern;

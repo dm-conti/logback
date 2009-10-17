@@ -23,6 +23,10 @@ public class Env {
     return System.getProperty("os.name").indexOf("Linux") != -1;
   }
 
+  static public boolean isMac() {
+    return System.getProperty("os.name").indexOf("Mac") != -1;
+  }
+
   static public boolean isJDK6OrHigher() {
     String javaVersion = System.getProperty("java.version");
     if (javaVersion == null) {

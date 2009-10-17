@@ -33,10 +33,10 @@ public class SyslogWriter extends Writer {
    */
   private static final int MAX_LEN = 1024;
 
-  private InetAddress address;
+  protected InetAddress address;
   private DatagramSocket ds;
-  private StringBuffer buf = new StringBuffer();
-  final private int port;
+  protected StringBuffer buf = new StringBuffer();
+  protected final int port;
 
   public SyslogWriter(String syslogHost, int port) throws UnknownHostException,
       SocketException {

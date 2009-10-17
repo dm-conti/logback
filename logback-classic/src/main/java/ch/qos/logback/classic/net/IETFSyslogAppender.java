@@ -1,15 +1,21 @@
 /**
  * Logback: the reliable, generic, fast and flexible logging framework.
+ * Copyright (C) 1999-2009, QOS.ch. All rights reserved.
  *
- * Copyright (C) 1999-2006, QOS.ch
+ * This program and the accompanying materials are dual-licensed under
+ * either the terms of the Eclipse Public License v1.0 as published by
+ * the Eclipse Foundation
  *
- * This library is free software, you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation.
+ *   or (per the licensee's choosing)
+ *
+ * under the terms of the GNU Lesser General Public License version 2.1
+ * as published by the Free Software Foundation.
  */
 package ch.qos.logback.classic.net;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
+import java.net.SocketException;
 
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.pattern.ConverterOptions;
@@ -44,6 +50,8 @@ public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
   PatternLayout prefixLayout = new PatternLayout();
   PatternLayout structuredLayout;
   PatternLayout defaultLayout;
+
+  TransportType transport = TransportType.UDP;
 
   public Layout<ILoggingEvent> buildLayout(String facilityStr) {
     ConverterOptions<SyslogOption> syslogOptions = new ConverterOptions<SyslogOption>(facilityStr);
@@ -131,6 +139,9 @@ public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
     }
   }
 
+  public SyslogWriter getWriter() throws UnknownHostException, SocketException {
+    return new IETFSyslogWriter(syslogHost, port, transport, this);
+  }
 
   public String getAppName() {
     return appName;
@@ -170,5 +181,25 @@ public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
 
   public void setMdcIncluded(boolean mdcIncluded) {
     this.mdcIncluded = mdcIncluded;
+  }
+
+  /**
+   * Sets the Transport to use. Must be either TCP or UDP.
+   * @param transport The transport type to use.
+   */
+  public void setTransport(String transport) {
+    TransportType t = TransportType.valueOf(transport);
+    if (t == null) {
+      throw new IllegalArgumentException("Invalid transport type " + transport);
+    }
+    this.transport = t;
+  }
+
+  /**
+   * Returns the Transport type being used.
+   * @return the Transport type.
+   */
+  public String getTransport() {
+    return transport.name();
   }
 }
