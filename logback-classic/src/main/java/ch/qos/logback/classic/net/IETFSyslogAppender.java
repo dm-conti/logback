@@ -18,10 +18,7 @@ import java.net.UnknownHostException;
 import java.net.SocketException;
 
 import ch.qos.logback.classic.PatternLayout;
-import ch.qos.logback.classic.pattern.ConverterOptions;
-import ch.qos.logback.classic.pattern.SyslogOption;
-import ch.qos.logback.classic.pattern.IETFSyslogStartConverter;
-import ch.qos.logback.classic.pattern.StructuredDataOption;
+import ch.qos.logback.classic.IETFSyslogLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
@@ -48,45 +45,37 @@ public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
   boolean mdcIncluded;
 
   PatternLayout prefixLayout = new PatternLayout();
-  PatternLayout structuredLayout;
-  PatternLayout defaultLayout;
+  IETFSyslogLayout structuredLayout;
+  IETFSyslogLayout defaultLayout;
 
   TransportType transport = TransportType.UDP;
 
   public Layout<ILoggingEvent> buildLayout(String facilityStr) {
-    ConverterOptions<SyslogOption> syslogOptions = new ConverterOptions<SyslogOption>(facilityStr);
-    syslogOptions.add(SyslogOption.APPNAME, getAppName());
-    syslogOptions.add(SyslogOption.MESSAGEID, getMessageId());
 
-    ConverterOptions<StructuredDataOption> sdOptions = new ConverterOptions<StructuredDataOption>();
-    sdOptions.add(StructuredDataOption.TRAILING_SPACE, true);
-    if (structuredDataId != null) {
-      sdOptions.add(StructuredDataOption.DEFAULT_ID, getStructuredDataId());
-    }
-    sdOptions.add(StructuredDataOption.ENTERPRISE_NUMBER, getEnterpriseNumber());
-    sdOptions.add(StructuredDataOption.INCLUDE_MDC, isMdcIncluded());
-
-    String prefixPattern = "%syslogStart{" + syslogOptions.toString() + "}%SD{" + sdOptions.toString() + "}%nopex";
-
-    prefixLayout.getInstanceConverterMap().put("syslogStart", IETFSyslogStartConverter.class.getName());
-
-    prefixLayout.setPattern(prefixPattern);
-    prefixLayout.setContext(getContext());
-    prefixLayout.start();
-
-    structuredLayout = new PatternLayout();
-    defaultLayout = new PatternLayout();
-
-    structuredLayout.getInstanceConverterMap().put("syslogStart", IETFSyslogStartConverter.class.getName());
-    defaultLayout.getInstanceConverterMap().put("syslogStart", IETFSyslogStartConverter.class.getName());
+    structuredLayout = new IETFSyslogLayout();
+    structuredLayout.setFacility(facilityStr);
+    structuredLayout.setAppName(appName);
+    structuredLayout.setMessageId(messageId);
+    structuredLayout.setStructuredDataId(structuredDataId);
+    structuredLayout.setMdcIncluded(mdcIncluded);
+    structuredLayout.setEnterpriseNumber(enterpriseNumber);
+    structuredLayout.setContext(getContext());
+    defaultLayout = new IETFSyslogLayout();
+    defaultLayout.setFacility(facilityStr);
+    defaultLayout.setAppName(appName);
+    defaultLayout.setMessageId(messageId);
+    defaultLayout.setStructuredDataId(structuredDataId);
+    defaultLayout.setMdcIncluded(mdcIncluded);
+    defaultLayout.setEnterpriseNumber(enterpriseNumber);
+    defaultLayout.setContext(getContext());
 
     if (suffixPattern == null) {
-      suffixPattern = "%SD{Message}";
-      defaultLayout.setPattern(prefixPattern + DEFAULT_SUFFIX_PATTERN);
+      defaultLayout.setPattern(DEFAULT_SUFFIX_PATTERN);
     } else {
-      defaultLayout.setPattern(prefixPattern + suffixPattern);
+      defaultLayout.setPattern(suffixPattern);
+      structuredLayout.setPattern(suffixPattern);
     }
-    structuredLayout.setPattern(prefixPattern + suffixPattern);
+
     structuredLayout.setContext(getContext());
     structuredLayout.start();
 

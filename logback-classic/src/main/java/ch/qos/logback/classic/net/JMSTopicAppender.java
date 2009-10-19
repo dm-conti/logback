@@ -33,10 +33,10 @@ import ch.qos.logback.core.spi.PreSerializationTransformer;
  * A simple appender that publishes events to a JMS Topic. The events are
  * serialized and transmitted as JMS message type {@link
  * javax.jms.ObjectMessage}.
- * 
+ *
  * For more information about this appender, please refer to
  * http://logback.qos.ch/manual/appenders.html#JMSTopicAppender
- * 
+ *
  * @author Ceki G&uuml;lc&uuml;
  */
 public class JMSTopicAppender extends JMSAppenderBase<ILoggingEvent> {
@@ -50,9 +50,9 @@ public class JMSTopicAppender extends JMSAppenderBase<ILoggingEvent> {
   TopicPublisher topicPublisher;
 
   int successiveFailureCount = 0;
-  
-  private PreSerializationTransformer<ILoggingEvent> pst = new LoggingEventPreSerializationTransformer();
-  
+
+  private PreSerializationTransformer<ILoggingEvent> pst;
+
   public JMSTopicAppender() {
   }
 
@@ -91,6 +91,11 @@ public class JMSTopicAppender extends JMSAppenderBase<ILoggingEvent> {
    * Options are activated and become effective only after calling this method.
    */
   public void start() {
+    if (layout == null) {
+      pst = new LoggingEventPreSerializationTransformer();
+    } else {
+      pst = new LayoutPreSerializationTransformer(layout);
+    }
     TopicConnectionFactory topicConnectionFactory;
 
     try {
