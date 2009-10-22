@@ -18,7 +18,7 @@ import java.net.UnknownHostException;
 import java.net.SocketException;
 
 import ch.qos.logback.classic.PatternLayout;
-import ch.qos.logback.classic.IETFSyslogLayout;
+import ch.qos.logback.classic.net.IETFSyslogLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;

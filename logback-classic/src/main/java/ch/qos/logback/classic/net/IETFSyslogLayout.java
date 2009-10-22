@@ -11,12 +11,13 @@
  * under the terms of the GNU Lesser General Public License version 2.1
  * as published by the Free Software Foundation.
  */
-package ch.qos.logback.classic;
+package ch.qos.logback.classic.net;
 
 import ch.qos.logback.classic.pattern.IETFSyslogStartConverter;
 import ch.qos.logback.classic.pattern.SyslogOption;
 import ch.qos.logback.classic.pattern.ConverterOptions;
 import ch.qos.logback.classic.pattern.StructuredDataOption;
+import ch.qos.logback.classic.PatternLayout;
 
 /**
  * <p>
@@ -24,7 +25,8 @@ import ch.qos.logback.classic.pattern.StructuredDataOption;
  *
  */
 
-public class IETFSyslogLayout extends PatternLayout {
+public class IETFSyslogLayout extends PatternLayout
+{
 
   String facilityStr;
   String appName;
