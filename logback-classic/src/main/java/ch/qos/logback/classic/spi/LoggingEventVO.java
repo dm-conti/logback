@@ -162,7 +162,11 @@ public class LoggingEventVO implements ILoggingEvent, Serializable {
       out.writeInt(len);
       for (int i = 0; i < argumentArray.length; i++) {
         if (argumentArray[i] != null) {
-          out.writeObject(argumentArray[i].toString());
+          if (argumentArray[i] instanceof Serializable) {
+            out.writeObject(argumentArray[i]);
+          } else {
+            out.writeObject(argumentArray[i].toString());
+          }
         } else {
           out.writeObject(NULL_ARGUMENT_ARRAY_ELEMENT);
         }
@@ -181,7 +185,7 @@ public class LoggingEventVO implements ILoggingEvent, Serializable {
 
     int argArrayLen = in.readInt();
     if (argArrayLen != NULL_ARGUMENT_ARRAY) {
-      argumentArray = new String[argArrayLen];
+      argumentArray = new Serializable[argArrayLen];
       for (int i = 0; i < argArrayLen; i++) {
         Object val = in.readObject();
         if (!NULL_ARGUMENT_ARRAY_ELEMENT.equals(val)) {

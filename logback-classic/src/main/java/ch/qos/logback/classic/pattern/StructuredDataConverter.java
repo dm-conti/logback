@@ -90,13 +90,13 @@ public class StructuredDataConverter extends ClassicConverter {
     if (key == null) {
       Map[] maps = null;
       if (includeMDC) {
-        maps = new Map[] { MDC.getCopyOfContextMap() };
+        maps = new Map[] { event.getMDCPropertyMap() };
       }
       StringBuilder sb = new StringBuilder();
       StructuredData.Id id = data.getId();
       if (id == null) {
         if (defaultId != null) {
-          id = new StructuredData.Id(defaultId, enterpriseNumber, null, null);  
+          id = new StructuredData.Id(defaultId, enterpriseNumber, null, null);
         }
       } else {
         id = id.makeId(defaultId, enterpriseNumber);
