@@ -33,6 +33,8 @@ public class IETFSyslogWriter extends SyslogWriter {
    * The default reconnection delay (30000 milliseconds or 30 seconds).
    */
   static final int DEFAULT_RECONNECTION_DELAY = 30000;
+
+  private static final int MAX_LEN = 8192;
   /**
    * The maximum length after which we discard the existing string buffer and
    * start anew.
@@ -124,7 +126,6 @@ public class IETFSyslogWriter extends SyslogWriter {
         sb.append(" ");
         sb.append(buf.toString());
         try {
-          System.out.println(sb.toString());
           osw.write(sb.toString());
           // addInfo("=========Flushing.");
           osw.flush();
@@ -139,6 +140,13 @@ public class IETFSyslogWriter extends SyslogWriter {
           base.addWarn("Detected problem with connection: " + e);
           if (reconnectionDelay > 0) {
             fireConnector();
+          }
+        } finally {
+          // clean up for next round
+          if (buf.length() > MAX_LEN) {
+            buf = new StringBuffer();
+          } else {
+            buf.setLength(0);
           }
         }
       }

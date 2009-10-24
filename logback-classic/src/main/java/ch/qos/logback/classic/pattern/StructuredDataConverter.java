@@ -104,32 +104,36 @@ public class StructuredDataConverter extends ClassicConverter {
           maps = new Map[] { event.getMDCPropertyMap() };
         } */
         id = data.getId();
-        if (id == null) {
-          if (defaultId != null) {
-            id = new StructuredDataId(defaultId, enterpriseNumber, null, null);
+        if (id != null && (id.getName() != null || defaultId != null)) {
+          if (id == null) {
+            if (defaultId != null) {
+              id = new StructuredDataId(defaultId, enterpriseNumber, null, null);
+            }
+          } else {
+            id = id.makeId(defaultId, enterpriseNumber);
           }
-        } else {
-          id = id.makeId(defaultId, enterpriseNumber);
+          String str = data.asString(format, id);
+          if (str != null && str.length() > 0) {
+            if (leadingSpace) {
+              leadingDone = true;
+              sb.append(" ");
+            }
+            sb.append(str);
+          }
         }
-        String str = data.asString(format, id);
-        if (str != null && str.length() > 0) {
-          if (leadingSpace) {
-            leadingDone = true;
+      }
+      if (isMDC) {
+        int ein = id == null || id.isReserved() ? enterpriseNumber : id.getEnterpriseNumber();
+        if (ein > 0) {
+          id = new StructuredDataId("mdc", ein, null, null);
+          StructuredData mdcData = new StructuredDataImpl(id, null, null);
+          mdcData.getData().putAll(mdc);
+          String str = mdcData.asString(format, id);
+          if (leadingSpace && !leadingDone) {
             sb.append(" ");
           }
           sb.append(str);
         }
-      }
-      if (isMDC) {
-        int ein = id == null ? enterpriseNumber : id.getEnterpriseNumber();
-        id = new StructuredDataId("mdc", ein, null, null);
-        StructuredData mdcData = new StructuredDataImpl(id, null, null);
-        mdcData.getData().putAll(mdc);
-        String str = mdcData.asString(format, id);
-        if (leadingSpace && !leadingDone) {
-          sb.append(" ");
-        }
-        sb.append(str);
       }
       if (sb.length() == 0 && !hideNil) {
           sb.append(NIL_STRING);
