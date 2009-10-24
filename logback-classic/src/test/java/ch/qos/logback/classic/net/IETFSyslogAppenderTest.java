@@ -18,6 +18,7 @@ import org.junit.Test;
 import org.slf4j.MDC;
 import org.slf4j.StructuredData;
 import org.slf4j.StructuredDataImpl;
+import org.slf4j.StructuredDataId;
 import org.slf4j.impl.StaticLoggerBinder;
 import org.slf4j.impl.StaticLoggerBinderFriend;
 import org.slf4j.ext.EventLogger;
@@ -159,7 +160,7 @@ public class IETFSyslogAppenderTest {
     sa.setPort(port);
     sa.setAppName("Banking");
     // Valid id's are a) reseverd (no '@') or b) of the form mysid@EnterpriseNumber.
-    StructuredData.Id sdId = new StructuredData.Id("Event", 18060, null, null);
+    StructuredDataId sdId = new StructuredDataId("Event", 18060, null, null);
     //sa.setStructuredDataId(sdId);
     sa.setMdcIncluded(true);
     sa.start();
@@ -196,7 +197,7 @@ public class IETFSyslogAppenderTest {
     assertTrue(msg.startsWith(expected));
 
     String first = "<\\d{3}>1 \\w{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}\\.\\d{1,3}[\\S]* [\\w.-]* [\\w.-]* - [\\w.-]* ";
-    checkRegexMatch(msg, first + "\\[" + sdId + "( [\\w.-]*=\"[\\w.-]*\")*\\] " + data.getMessage());
+    checkRegexMatch(msg, first + "[\\[" + sdId + "( [\\w.-]*=\"[\\w.-]*\")*\\]]+ " + data.getMessage());
   }
 
   private void checkRegexMatch(String s, String regex) {

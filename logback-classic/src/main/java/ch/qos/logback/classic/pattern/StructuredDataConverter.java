@@ -7,6 +7,8 @@ import ch.qos.logback.core.spi.PropertyContainer;
 import ch.qos.logback.core.util.OptionHelper;
 import org.slf4j.StructuredData;
 import org.slf4j.MDC;
+import org.slf4j.StructuredDataId;
+import org.slf4j.StructuredDataImpl;
 
 /**
  * Converts StructuredData into various formats:
@@ -25,7 +27,7 @@ public class StructuredDataConverter extends ClassicConverter {
   String key;
   String format;
   String defaultId;
-  int enterpriseNumber = StructuredData.Id.RESERVED;
+  int enterpriseNumber = StructuredDataId.RESERVED;
   boolean leadingSpace;
   boolean trailingSpace;
   boolean includeMDC;
@@ -80,35 +82,57 @@ public class StructuredDataConverter extends ClassicConverter {
   @Override
   public String convert(ILoggingEvent event) {
     Object objects[] = event.getArgumentArray();
+    Map mdc = event.getMDCPropertyMap();
 
-    if (objects == null || objects.length != 1 || !(objects[0] instanceof StructuredData)) {
+    boolean isStructured = objects != null && objects.length == 1 && objects[0] instanceof StructuredData;
+    boolean isMDC = includeMDC && mdc != null && mdc.size() > 0;
+
+    if (!isStructured && !isMDC) {
       return EMPTY_STRING;
     }
 
     StructuredData data = (StructuredData) objects[0];
 
+    boolean leadingDone = false;
+    StructuredDataId id = null;
+
     if (key == null) {
-      Map[] maps = null;
-      if (includeMDC) {
-        maps = new Map[] { event.getMDCPropertyMap() };
-      }
       StringBuilder sb = new StringBuilder();
-      StructuredData.Id id = data.getId();
-      if (id == null) {
-        if (defaultId != null) {
-          id = new StructuredData.Id(defaultId, enterpriseNumber, null, null);
+      if (isStructured) {
+        /*Map[] maps = null;
+        if (includeMDC) {
+          maps = new Map[] { event.getMDCPropertyMap() };
+        } */
+        id = data.getId();
+        if (id == null) {
+          if (defaultId != null) {
+            id = new StructuredDataId(defaultId, enterpriseNumber, null, null);
+          }
+        } else {
+          id = id.makeId(defaultId, enterpriseNumber);
         }
-      } else {
-        id = id.makeId(defaultId, enterpriseNumber);
+        String str = data.asString(format, id);
+        if (str != null && str.length() > 0) {
+          if (leadingSpace) {
+            leadingDone = true;
+            sb.append(" ");
+          }
+          sb.append(str);
+        }
       }
-      String str = data.asString(format, id, maps);
-      if (str != null && str.length() > 0) {
-        if (leadingSpace) {
+      if (isMDC) {
+        int ein = id == null ? enterpriseNumber : id.getEnterpriseNumber();
+        id = new StructuredDataId("mdc", ein, null, null);
+        StructuredData mdcData = new StructuredDataImpl(id, null, null);
+        mdcData.getData().putAll(mdc);
+        String str = mdcData.asString(format, id);
+        if (leadingSpace && !leadingDone) {
           sb.append(" ");
         }
         sb.append(str);
-      } else if (!hideNil){
-        sb.append(NIL_STRING);
+      }
+      if (sb.length() == 0 && !hideNil) {
+          sb.append(NIL_STRING);
       }
       if (trailingSpace) {
         sb.append(" ");
