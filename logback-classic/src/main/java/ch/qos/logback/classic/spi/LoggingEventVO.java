@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.util.Map;
 
 import org.slf4j.Marker;
+import org.slf4j.StructuredData;
 import org.slf4j.helpers.MessageFormatter;
 
 import ch.qos.logback.classic.Level;
@@ -162,7 +163,7 @@ public class LoggingEventVO implements ILoggingEvent, Serializable {
       out.writeInt(len);
       for (int i = 0; i < argumentArray.length; i++) {
         if (argumentArray[i] != null) {
-          if (argumentArray[i] instanceof Serializable) {
+          if (argumentArray[i] instanceof StructuredData) {
             out.writeObject(argumentArray[i]);
           } else {
             out.writeObject(argumentArray[i].toString());

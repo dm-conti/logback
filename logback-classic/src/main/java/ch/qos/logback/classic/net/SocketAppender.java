@@ -23,10 +23,10 @@ import ch.qos.logback.core.spi.PreSerializationTransformer;
 /**
  * Sends {@link ILoggingEvent} objects to a remote a log server, usually a
  * {@link SocketNode}.
- * 
+ *
  * For more information on this appender, please refer to the online manual
  * at http://logback.qos.ch/manual/appenders.html#SocketAppender
- * 
+ *
  * @author Ceki G&uuml;lc&uuml;
  * @author S&eacute;bastien Pennec
  */
@@ -35,8 +35,8 @@ public class SocketAppender extends SocketAppenderBase<ILoggingEvent> {
 
   boolean includeCallerData = false;
 
-  PreSerializationTransformer<ILoggingEvent> pst = new LoggingEventPreSerializationTransformer();
-  
+  PreSerializationTransformer<ILoggingEvent> pst = null;
+
   public SocketAppender() {
   }
 
@@ -59,6 +59,18 @@ public class SocketAppender extends SocketAppenderBase<ILoggingEvent> {
   }
 
   @Override
+  public void start() {
+    if (pst == null) {
+      if (layout == null) {
+        pst = new LoggingEventPreSerializationTransformer();
+      } else {
+        pst = new LayoutPreSerializationTransformer(layout);
+      }
+    }
+    super.start();
+  }
+
+  @Override
   protected void postProcessEvent(ILoggingEvent event) {
     if (includeCallerData) {
       event.getCallerData();
@@ -68,9 +80,17 @@ public class SocketAppender extends SocketAppenderBase<ILoggingEvent> {
   public void setIncludeCallerData(boolean includeCallerData) {
     this.includeCallerData = includeCallerData;
   }
-  
+
+  /**
+   * Set the PreSerializationTransformer.
+   * @param transformer The PreSerializationTransformer.
+   */
+  public void setPST(PreSerializationTransformer<ILoggingEvent> transformer) {
+    pst = transformer;
+  }
+
   public PreSerializationTransformer<ILoggingEvent> getPST() {
     return pst;
   }
-  
+
 }

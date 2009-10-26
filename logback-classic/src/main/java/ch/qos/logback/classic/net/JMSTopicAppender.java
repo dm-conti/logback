@@ -51,7 +51,7 @@ public class JMSTopicAppender extends JMSAppenderBase<ILoggingEvent> {
 
   int successiveFailureCount = 0;
 
-  private PreSerializationTransformer<ILoggingEvent> pst;
+  private PreSerializationTransformer<ILoggingEvent> pst = null;
 
   public JMSTopicAppender() {
   }
@@ -88,13 +88,31 @@ public class JMSTopicAppender extends JMSAppenderBase<ILoggingEvent> {
   }
 
   /**
+   * Set the PreSerializationTransformer.
+   * @param transformer The PreSerializationTransformer.
+   */
+  public void setPST(PreSerializationTransformer<ILoggingEvent> transformer) {
+    pst = transformer;
+  }
+
+  /**
+   * Return the PreSerializationTransformer.
+   * @return The PreSerializationTransformer.
+   */
+  public PreSerializationTransformer<ILoggingEvent> getPST() {
+    return pst;
+  }
+
+  /**
    * Options are activated and become effective only after calling this method.
    */
   public void start() {
-    if (layout == null) {
-      pst = new LoggingEventPreSerializationTransformer();
-    } else {
-      pst = new LayoutPreSerializationTransformer(layout);
+    if (pst == null) {
+      if (layout == null) {
+        pst = new LoggingEventPreSerializationTransformer();
+      } else {
+        pst = new LayoutPreSerializationTransformer(layout);
+      }
     }
     TopicConnectionFactory topicConnectionFactory;
 
