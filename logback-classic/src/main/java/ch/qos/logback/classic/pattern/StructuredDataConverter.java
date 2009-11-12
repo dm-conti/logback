@@ -127,7 +127,7 @@ public class StructuredDataConverter extends ClassicConverter {
         if (ein > 0) {
           id = new StructuredDataId("mdc", ein, null, null);
           StructuredData mdcData = new StructuredDataImpl(id, null, null);
-          mdcData.getData().putAll(mdc);
+          mdcData.putAll(mdc);
           String str = mdcData.asString(format, id);
           if (leadingSpace && !leadingDone) {
             sb.append(" ");

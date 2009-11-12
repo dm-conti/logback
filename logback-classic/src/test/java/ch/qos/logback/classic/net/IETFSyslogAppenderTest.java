@@ -117,7 +117,7 @@ public class IETFSyslogAppenderTest {
     Logger logger = lc.getLogger(loggerName);
     logger.addAppender(sa);
     StructuredData data = new StructuredDataImpl((String) null, "Hello, ${Name}", null);
-    data.getData().put("Name", "John Smith");
+    data.put("Name", "John Smith");
     logger.debug("", data);
 
     // wait max 2 seconds for mock server to finish. However, it should
@@ -173,10 +173,9 @@ public class IETFSyslogAppenderTest {
     MDC.put("UserId", "TestUser");
     MDC.put("IpAddress","10.200.10.5");
     StructuredData data = new StructuredDataImpl(sdId, "Transfer succeeded", "Transfer");
-    Map<String, Object> map = data.getData();
-    map.put("FromAccount", "12345601");
-    map.put("ToAccount", "12345602");
-    map.put("Amount", "55.00");
+    data.put("FromAccount", "12345601");
+    data.put("ToAccount", "12345602");
+    data.put("Amount", "55.00");
     EventLogger.logEvent(data);
 
     // wait max 2 seconds for mock server to finish. However, it should
