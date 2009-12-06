@@ -76,7 +76,7 @@ public class IETFSyslogWriter extends SyslogWriter {
   public void close() {
     if (isUDP) {
       super.close();
-    } else {
+    } else if (handler != null) {
       handler.close();
       handler = null;
     }
@@ -122,9 +122,10 @@ public class IETFSyslogWriter extends SyslogWriter {
     public void flush() throws IOException {
       if (osw != null) {
         StringBuilder sb = new StringBuilder();
-        sb.append(Integer.toString(buf.length()));
-        sb.append(" ");
+        /**sb.append(Integer.toString(buf.length()));
+        sb.append(" ");*/
         sb.append(buf.toString());
+        sb.append("\n");
         try {
           osw.write(sb.toString());
           // addInfo("=========Flushing.");

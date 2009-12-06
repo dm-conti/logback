@@ -30,6 +30,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggerRemoteView;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.spi.AppenderAttachable;
 import ch.qos.logback.core.spi.AppenderAttachableImpl;
 import ch.qos.logback.core.spi.FilterReply;
@@ -289,6 +290,27 @@ public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
     return aai.detachAppender(appender);
   }
 
+  static int getSeparatorIndexOf(String name) {
+    return getSeparatorIndexOf(name, 0);
+  }
+
+  /**
+   * Get the position of the separator character, if any, starting at position
+   * 'fromIndex'.
+   *
+   * @param name
+   * @param fromIndex
+   * @return
+   */
+  static int getSeparatorIndexOf(String name, int  fromIndex) {
+    int i = name.indexOf(CoreConstants.DOT, fromIndex);
+    if(i != -1) {
+      return i;
+    } else {
+      return name.indexOf(CoreConstants.DOLLAR, fromIndex);
+    }
+  }
+
   /**
    * Create a child of this logger by suffix, that is, the part of the name
    * extending this logger. For example, if this logger is named "x.y" and the
@@ -304,11 +326,11 @@ public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
    * @return
    */
   Logger createChildByLastNamePart(final String lastPart) {
-    int i_index = lastPart.indexOf(ClassicConstants.LOGGER_SEPARATOR);
+    int i_index = getSeparatorIndexOf(lastPart);
     if (i_index != -1) {
       throw new IllegalArgumentException("Child name [" + lastPart
           + " passed as parameter, may not include ["
-          + ClassicConstants.LOGGER_SEPARATOR + "]");
+          + CoreConstants.DOT + "]");
     }
 
     if (childrenList == null) {
@@ -319,7 +341,7 @@ public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
       childLogger = new Logger(lastPart, this, this.loggerContext);
     } else {
       childLogger = new Logger(
-          name + ClassicConstants.LOGGER_SEPARATOR + lastPart, this,
+          name + CoreConstants.DOT + lastPart, this,
           this.loggerContext);
     }
     childrenList.add(childLogger);
@@ -355,7 +377,7 @@ public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
   static private final int DEFAULT_CHILD_ARRAY_SIZE = 5;
 
   Logger createChildByName(final String childName) {
-    int i_index = childName.indexOf(ClassicConstants.LOGGER_SEPARATOR, this.name
+    int i_index = getSeparatorIndexOf(childName, this.name
         .length() + 1);
     if (i_index != -1) {
       throw new IllegalArgumentException("For logger [" + this.name

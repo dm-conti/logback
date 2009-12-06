@@ -26,12 +26,11 @@ import ch.qos.logback.core.rolling.helper.DefaultArchiveRemover;
  */
 public class DefaultTimeBasedFileNamingAndTriggeringPolicy<E> extends TimeBasedFileNamingAndTriggeringPolicyBase<E> {
 
-  
-  
   @Override
   public void start() {
     super.start();
     archiveRemover = new DefaultArchiveRemover(tbrp.fileNamePattern, rc);
+    archiveRemover.setContext(context);
     started = true;
   }
   
@@ -41,7 +40,7 @@ public class DefaultTimeBasedFileNamingAndTriggeringPolicy<E> extends TimeBasedF
       Date dateOfElapsedPeriod = dateInCurrentPeriod;
       elapsedPeriodsFileName = tbrp.fileNamePatternWCS
           .convert(dateOfElapsedPeriod);
-      updateDateInCurrentPeriod(time);
+      setDateInCurrentPeriod(time);
       computeNextCheck();
       return true;
     } else {

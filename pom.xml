@@ -5,7 +5,7 @@
 
   <groupId>ch.qos.logback</groupId>
   <artifactId>logback-parent</artifactId>
-  <version>0.9.18-SNAPSHOT</version>
+  <version>0.9.19-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Logback-Parent</name>
 
@@ -35,8 +35,9 @@
   </dependencies>
 
   <properties>
-    <!-- slf4j.version property is used below and in setClasspath.cmd -->
-    <slf4j.version>1.5.10-SNAPSHOT</slf4j.version>
+    <!-- slf4j.version property is used below, in
+         logback-classic/pom.xml and in setClasspath.cmd -->
+    <slf4j.version>1.5.11-SNAPSHOT</slf4j.version>
     <consolePlugin.version>1.1.0</consolePlugin.version>
   </properties>
 
@@ -119,6 +120,9 @@
 		</dependency>
     </dependencies>
   </dependencyManagement>
+
+
+
   <build>
     <extensions>
       <extension>
@@ -271,26 +275,20 @@
   </ciManagement>
   -->
 
-
-
-
   <distributionManagement>
     <site>
       <id>pixie</id>
-      <url>scp://pixie/var/www/logback.qos.ch/htdocs/</url>
+      <url>scp://pixie.qos.ch/var/www/logback.qos.ch/htdocs/</url>
     </site>
 
     <repository>
       <id>pixie</id>
-      <url>scp://pixie/var/mvnrepo/</url>
+      <url>scp://pixie.qos.ch/var/mvnrepo/</url>
     </repository>
 
-    <snapshotRepository>
-      <id>pixie-snapshot</id>
-      <url>scp://pixie/var/mvnrepo-snapshots/</url>
-    </snapshotRepository>
-
   </distributionManagement>
+
+
 
   <profiles>
     <profile>

@@ -13,11 +13,13 @@
  */
 package ch.qos.logback.classic.turbo;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -42,38 +44,46 @@ public class ReconfigureOnChangeTest {
   final static int THREAD_COUNT = 5;
   final static int LOOP_LEN = 1000 * 1000;
 
+  // the space in the file name mandated by
+  // http://jira.qos.ch/browse/LBCORE-119
   final static String SCAN1_FILE_AS_STR = TeztConstants.TEST_DIR_PREFIX
-      + "input/turbo/scan1.xml";
+      + "input/turbo/scan 1.xml";
+
+  final static String SCAN_LBCLASSIC_154_FILE_AS_STR = TeztConstants.TEST_DIR_PREFIX
+      + "input/turbo/scan_lbclassic154.xml";
 
   // it actually takes time for Windows to propagate file modification changes
-  // values below 100 milliseconds can be problematic
-  // the same propagation latency occurs in Linux but is even larger (>600 ms)
-  static int SLEEP_BETWEEN_UPDATES = 250;
+  // values below 100 milliseconds can be problematic the same propagation
+  // latency occurs in Linux but is even larger (>600 ms)
+  final static int DEFAULT_SLEEP_BETWEEN_UPDATES = 110;
 
-  // we won't at least 10 re-configurations
-  static int TOTAL_TEST_DURATION = SLEEP_BETWEEN_UPDATES * 10;
+  int sleepBetweenUpdates = DEFAULT_SLEEP_BETWEEN_UPDATES;
+
+  static int totalTestDuration;
 
   LoggerContext loggerContext = new LoggerContext();
   Logger logger = loggerContext.getLogger(this.getClass());
-  MultiThreadedHarness harness = new MultiThreadedHarness(TOTAL_TEST_DURATION);
+  MultiThreadedHarness harness;
 
   @Before
   public void setUp() {
     // take into account propagation latency occurs on Linux
-    if (Env.isLinux()) {
-      SLEEP_BETWEEN_UPDATES = 850;
+    if (Env.isLinux() || Env.isMac()) {
+      sleepBetweenUpdates = 1000;
+      totalTestDuration = sleepBetweenUpdates * 5;
+    } else {
+      totalTestDuration = sleepBetweenUpdates * 10;
     }
-
+    harness = new MultiThreadedHarness(totalTestDuration);
   }
 
-  void configure(String file) throws JoranException {
+  void configure(File file) throws JoranException {
     JoranConfigurator jc = new JoranConfigurator();
     jc.setContext(loggerContext);
     jc.doConfigure(file);
   }
 
   RunnableWithCounterAndDone[] buildRunnableArray(File configFile) {
-
     RunnableWithCounterAndDone[] rArray = new RunnableWithCounterAndDone[THREAD_COUNT];
     rArray[0] = new Updater(configFile);
     for (int i = 1; i < THREAD_COUNT; i++) {
@@ -82,11 +92,21 @@ public class ReconfigureOnChangeTest {
     return rArray;
   }
 
+  @Test
+  // See http://jira.qos.ch/browse/LBCORE-119
+  public void fileToURLAndBack() throws MalformedURLException {
+    File file = new File("a b.xml");
+    URL url = file.toURI().toURL();
+    ReconfigureOnChangeFilter rocf = new ReconfigureOnChangeFilter();
+    File back = rocf.convertToFile(url);
+    assertEquals(file.getName(), back.getName());
+  }
+
   // Tests whether ConfigurationAction is installing ReconfigureOnChangeFilter
   @Test
   public void scan1() throws JoranException, IOException, InterruptedException {
-    configure(SCAN1_FILE_AS_STR);
     File file = new File(SCAN1_FILE_AS_STR);
+    configure(file);
     RunnableWithCounterAndDone[] runnableArray = buildRunnableArray(file);
     harness.execute(runnableArray);
 
@@ -94,23 +114,39 @@ public class ReconfigureOnChangeTest {
         new InfoStatus("end of execution ", this));
 
     long expectedRreconfigurations = runnableArray[0].getCounter();
+    verify(expectedRreconfigurations);
+  }
 
+  // check for deadlocks
+  @Test(timeout = 20000)
+  public void scan_lbclassic154() throws JoranException, IOException,
+      InterruptedException {
+    File file = new File(SCAN_LBCLASSIC_154_FILE_AS_STR);
+    configure(file);
+    RunnableWithCounterAndDone[] runnableArray = buildRunnableArray(file);
+    harness.execute(runnableArray);
+
+    loggerContext.getStatusManager().add(
+        new InfoStatus("end of execution ", this));
+
+    long expectedRreconfigurations = runnableArray[0].getCounter();
+    verify(expectedRreconfigurations);
+  }
+
+  void verify(long expectedRreconfigurations) {
     StatusChecker checker = new StatusChecker(loggerContext);
-    try {
-      assertTrue(checker.isErrorFree());
-      int effectiveResets = checker
-          .matchCount("Resetting and reconfiguring context");
-      // the number of effective resets must be equal or less than
-      // expectedRreconfigurations
-      assertTrue(effectiveResets <= expectedRreconfigurations);
-      // however, there should be some effective resets
-      String failMsg = "effective=" + effectiveResets + ", expected="
-          + expectedRreconfigurations;
-      assertTrue(failMsg,
-          (effectiveResets * 1.3) >= (expectedRreconfigurations * 1.0));
-    } catch (AssertionError ae) {
-      StatusPrinter.print(loggerContext);
-    }
+    StatusPrinter.print(loggerContext);
+    assertTrue(checker.isErrorFree());
+    int effectiveResets = checker
+        .matchCount("Resetting and reconfiguring context");
+    // the number of effective resets must be equal or less than
+    // expectedRreconfigurations
+    assertTrue(effectiveResets <= expectedRreconfigurations);
+    // however, there should be some effective resets
+    String failMsg = "effective=" + effectiveResets + ", expected="
+        + expectedRreconfigurations;
+    assertTrue(failMsg,
+        (effectiveResets * 1.3) >= (expectedRreconfigurations * 1.0));
   }
 
   ReconfigureOnChangeFilter initROCF() throws MalformedURLException {
@@ -126,8 +162,8 @@ public class ReconfigureOnChangeTest {
   @Test
   public void directPerfTest() throws MalformedURLException {
     if (Env.isLinux()) {
-      // for some reason this test does not pass on Linux (AMD 64 bit, Dual Core
-      // Opteron 170)
+      // for some reason this test does not pass on Linux (AMD 64 bit,
+      // Dual Core Opteron 170)
       return;
     }
 
@@ -156,7 +192,8 @@ public class ReconfigureOnChangeTest {
   @Test
   public void indirectPerfTest() throws MalformedURLException {
     if (Env.isLinux()) {
-      // for some reason this test does not pass on Linux (AMD 64 bit, Dual Core
+      // for some reason this test does not pass on Linux (AMD 64 bit,
+      // Dual Core
       // Opteron 170)
       return;
     }
@@ -197,7 +234,7 @@ public class ReconfigureOnChangeTest {
     public void run() {
       while (!isDone()) {
         try {
-          Thread.sleep(SLEEP_BETWEEN_UPDATES);
+          Thread.sleep(sleepBetweenUpdates);
         } catch (InterruptedException e) {
         }
         if (isDone()) {

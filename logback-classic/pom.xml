@@ -5,7 +5,7 @@
   <parent>
     <groupId>ch.qos.logback</groupId>
     <artifactId>logback-parent</artifactId>
-    <version>0.9.18-SNAPSHOT</version>
+    <version>0.9.19-SNAPSHOT</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
@@ -17,7 +17,7 @@
   <name>Logback Classic Module</name>
 
   <url>http://logback.qos.ch</url>
-  <description>
+  <description>   
     Logback: the reliable, generic, fast and flexible logging library for Java.
   </description>
 
@@ -50,8 +50,7 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-ext</artifactId>
       <version>${slf4j.version}</version>
-      <scope>compile</scope>
-      <optional>true</optional>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -102,6 +101,13 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>integration</artifactId>
+      <version>${slf4j.version}</version>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
@@ -143,6 +149,13 @@
       <version>1.6</version>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.apache.felix</groupId>
+      <artifactId>org.apache.felix.main</artifactId>
+      <version>2.0.2</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -179,6 +192,45 @@
         </executions>
       </plugin>
 
+      
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.2</version>
+        <dependencies>
+          <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+          </dependency>
+          <dependency>
+            <groupId>ant</groupId>
+            <artifactId>ant-junit</artifactId>
+            <version>1.6.5</version>    
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>ant-osgi-test</id>
+            <phase>package</phase>
+            <configuration>
+              <tasks>      
+                <property name="currentVersion" value="${version}" />
+                <property name="slf4j.version" value="${slf4j.version}"/>
+                <property name="test_classpath" refid="maven.test.classpath"/>
+                <property name="slf4jJAR"
+                          value="${settings.localRepository}/org/slf4j/slf4j-api/${slf4j.version}/slf4j-api-${slf4j.version}.jar" />
+                <property name="basedir" value="${basedir}"/>
+                <ant antfile="${basedir}/osgi-build.xml"/>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -190,6 +242,8 @@
             <exclude>**/AllClassicTest.java</exclude>
             <exclude>**/PackageTest.java</exclude>
             <exclude>**/TestConstants.java</exclude>
+            <exclude>**/test_osgi/BundleTest.java</exclude>
+org.slf4j.test_osgi
             <exclude>**/SerializationPerfsTest.java</exclude>
           </excludes>
         </configuration>
@@ -216,8 +270,11 @@
                  of java code. -->
 
             <Import-Package>
-              sun.reflect;resolution:=optional, javax.jms;resolution:=optional,
-              ch.qos.logback.core.rolling, ch.qos.logback.core.rolling.helper,
+              sun.reflect;resolution:=optional, 
+              javax.*;resolution:=optional,
+              org.xml.*;resolution:=optional,
+              ch.qos.logback.core.rolling, 
+              ch.qos.logback.core.rolling.helper,
               *
             </Import-Package>
 

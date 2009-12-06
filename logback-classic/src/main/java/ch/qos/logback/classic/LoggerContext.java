@@ -68,7 +68,7 @@ public class LoggerContext extends ContextBase implements ILoggerFactory,
   boolean started = false;
 
   int resetCount = 0;
-  
+
   public LoggerContext() {
     super();
     this.loggerCache = new Hashtable<String, Logger>();
@@ -134,7 +134,7 @@ public class LoggerContext extends ContextBase implements ILoggerFactory,
     // in between as well (if they don't already exist)
     String childName;
     while (true) {
-      int h = name.indexOf(ClassicConstants.LOGGER_SEPARATOR, i);
+      int h = Logger.getSeparatorIndexOf(name, i);
       if (h == -1) {
         childName = name;
       } else {
@@ -170,7 +170,7 @@ public class LoggerContext extends ContextBase implements ILoggerFactory,
    * reference, otherwise returns <code>null</code>.
    * 
    * @param name
-   *                the name of the logger to search for.
+   *          the name of the logger to search for.
    */
   public Logger exists(String name) {
     return (Logger) loggerCache.get(name);

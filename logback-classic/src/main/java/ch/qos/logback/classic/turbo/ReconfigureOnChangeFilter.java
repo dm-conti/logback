@@ -15,6 +15,7 @@ package ch.qos.logback.classic.turbo;
 
 import java.io.File;
 import java.net.URL;
+import java.net.URLDecoder;
 
 import org.slf4j.Marker;
 
@@ -25,12 +26,13 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.spi.FilterReply;
+import ch.qos.logback.core.status.InfoStatus;
 
 /**
  * Reconfigure a LoggerContext when the configuration file changes.
- *
+ * 
  * @author Ceki Gulcu
- *
+ * 
  */
 public class ReconfigureOnChangeFilter extends TurboFilter {
 
@@ -46,7 +48,9 @@ public class ReconfigureOnChangeFilter extends TurboFilter {
   long refreshPeriod = DEFAULT_REFRESH_PERIOD;
   File fileToScan;
   protected long nextCheck;
-  long lastModified;
+  volatile long lastModified;
+
+  Object lock = new Object();
 
   @Override
   public void start() {
@@ -55,7 +59,7 @@ public class ReconfigureOnChangeFilter extends TurboFilter {
     if (url != null) {
       fileToScan = convertToFile(url);
       if (fileToScan != null) {
-        synchronized (this) {
+        synchronized (lock) {
           long inSeconds = refreshPeriod / 1000;
           addInfo("Will scan for changes in file [" + fileToScan + "] every "
               + inSeconds + " seconds. ");
@@ -69,10 +73,12 @@ public class ReconfigureOnChangeFilter extends TurboFilter {
     }
   }
 
+  @SuppressWarnings("deprecation")
   File convertToFile(URL url) {
     String protocol = url.getProtocol();
     if ("file".equals(protocol)) {
-      return new File(url.getFile());
+      File file = new File(URLDecoder.decode(url.getFile()));
+      return file;
     } else {
       addError("URL [" + url + "] is not of type file");
       return null;
@@ -99,30 +105,38 @@ public class ReconfigureOnChangeFilter extends TurboFilter {
       return FilterReply.NEUTRAL;
     }
 
-    boolean changed;
-    long now = System.currentTimeMillis();
+    synchronized (lock) {
+      boolean changed = changeDetected();
+      if (changed) {
+        detachReconfigurationToNewThread();
 
-    synchronized (this) {
-      changed = changeDetected(now);
+      }
     }
 
-    if (changed) {
-      new ReconfigureThread().start();
-    }
     return FilterReply.NEUTRAL;
+  }
+
+  // by detaching reconfiguration to a new thread, we release the various
+  // locks held by the current thread, in particular, the AppenderAttachable
+  // reader lock.
+  private void detachReconfigurationToNewThread() {
+    // Even though this method resets the loggerContext, which clears the
+    // list of turbo filters including this instance, it is still possible
+    // for this instance to be subsequently invoked by another thread if it
+    // was already executing when the context was reset.
+    disableSubsequentRecofiguration();
+    addInfo("Detected change in [" + fileToScan + "]");
+    addInfo("Resetting and reconfiguring context [" + context.getName() + "]");
+    new ReconfiguringThread().start();
   }
 
   void updateNextCheck(long now) {
     nextCheck = now + refreshPeriod;
   }
 
-//  String stem() {
-//    return currentThreadName() + ", context " + context.getName()
-//        + ", nextCheck=" + (nextCheck - INIT);
-//  }
-
   // This method is synchronized to prevent near-simultaneous re-configurations
-  protected boolean changeDetected(long now) {
+  protected boolean changeDetected() {
+    long now = System.currentTimeMillis();
     if (now >= nextCheck) {
       updateNextCheck(now);
       return (lastModified != fileToScan.lastModified() && lastModified != SENTINEL);
@@ -146,18 +160,8 @@ public class ReconfigureOnChangeFilter extends TurboFilter {
     this.refreshPeriod = refreshPeriod;
   }
 
-  private class ReconfigureThread extends Thread {
+  class ReconfiguringThread extends Thread {
     public void run() {
-      // Even though this method resets the loggerContext, which clears the list
-      // of turbo filters including this instance, it is still possible for this
-      // instance to be subsequently invoked by another thread if it was already
-      // executing when the context was reset.
-      // We prevent multiple reconfigurations (for the same file change event) by
-      // setting an appropriate sentinel value for lastMofidied field.
-      disableSubsequentRecofiguration();
-      addInfo("Detected change in [" + fileToScan + "]");
-      addInfo("Resetting and reconfiguring context [" + context.getName()
-            + "]");
       JoranConfigurator jc = new JoranConfigurator();
       jc.setContext(context);
       LoggerContext lc = (LoggerContext) context;
@@ -167,6 +171,8 @@ public class ReconfigureOnChangeFilter extends TurboFilter {
       } catch (JoranException e) {
         addError("Failure during reconfiguration", e);
       }
+      lc.getStatusManager().add(
+          new InfoStatus("done resetting the logging context", this));
     }
   }
 }

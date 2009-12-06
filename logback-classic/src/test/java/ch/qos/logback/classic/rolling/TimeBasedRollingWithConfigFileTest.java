@@ -66,7 +66,7 @@ public class TimeBasedRollingWithConfigFileTest extends
   public void basic() throws Exception {
     String testId = "basic";
     lc.putProperty("testId", testId);
-    loadConfig(ClassicTestConstants.JORAN_INPUT_PREFIX + "/rolling/" + testId
+    loadConfig(ClassicTestConstants.JORAN_INPUT_PREFIX + "rolling/" + testId
         + ".xml");
     StatusChecker sc = new StatusChecker(lc);
     assertTrue(sc.isErrorFree());
@@ -107,7 +107,7 @@ public class TimeBasedRollingWithConfigFileTest extends
     int approxWritesPerPeriod = 64;
     sizeThreshold = prefix.length() * approxWritesPerPeriod;
     lc.putProperty("sizeThreshold", "" + sizeThreshold);
-    loadConfig(ClassicTestConstants.JORAN_INPUT_PREFIX + "/rolling/" + testId
+    loadConfig(ClassicTestConstants.JORAN_INPUT_PREFIX + "rolling/" + testId
         + ".xml");
     Logger root = lc.getLogger(Logger.ROOT_LOGGER_NAME);
 
@@ -139,8 +139,8 @@ public class TimeBasedRollingWithConfigFileTest extends
     // for various reasons, it is extremely difficult to have the files
     // match exactly the expected archive files. Thus, we aim for
     // an approximate match
-    assertTrue("eCount=" + eCount + "expectedFilenameList.size="
-        + expectedFilenameList.size(), eCount >= 5
+    assertTrue("exitenceCount=" + eCount + ", expectedFilenameList.size="
+        + expectedFilenameList.size(), eCount >= 4
         && eCount > expectedFilenameList.size() / 2);
   }
 

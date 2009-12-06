@@ -15,6 +15,7 @@ package ch.qos.logback.core.rolling;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
@@ -22,7 +23,9 @@ import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,7 +65,7 @@ public class TimeBasedRollingWithArchiveRemovalTest {
   TimeBasedFileNamingAndTriggeringPolicy<Object> tbfnatp = new DefaultTimeBasedFileNamingAndTriggeringPolicy<Object>();
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp()  {
     context.setName("test");
   }
 
@@ -104,7 +107,7 @@ public class TimeBasedRollingWithArchiveRemovalTest {
     slashCount = computeSlashCount(MONTHLY_CROLOLOG_DATE_PATTERN);
     int numPeriods = 40;
     int maxHistory = 2;
-    
+
     doRollover(randomOutputDir + "/%d{" + MONTHLY_CROLOLOG_DATE_PATTERN
         + "}/clean.txt.zip", MILLIS_IN_MONTH, maxHistory, numPeriods);
     int beginPeriod = Calendar.getInstance().get(Calendar.MONTH);
@@ -136,21 +139,26 @@ public class TimeBasedRollingWithArchiveRemovalTest {
   @Test
   public void dailySizeBasedRollover() throws Exception {
     SizeAndTimeBasedFNATP<Object> sizeAndTimeBasedFNATP = new SizeAndTimeBasedFNATP<Object>();
-    sizeAndTimeBasedFNATP.setMaxFileSize("10");
+    sizeAndTimeBasedFNATP.setMaxFileSize("10000");
     tbfnatp = sizeAndTimeBasedFNATP;
 
     slashCount = computeSlashCount(DAILY_DATE_PATTERN);
     doRollover(
         randomOutputDir + "/%d{" + DAILY_DATE_PATTERN + "}-clean.%i.zip",
         MILLIS_IN_DAY, 5, 5 * 4);
+
+    // make .zip optional so that if for one reason or another, no size-based
+    // rollover occurs on the last period, that the last period is still
+    // accounted
+    // for
     checkPatternCompliance(5 + 1 + slashCount,
-        "\\d{4}-\\d{2}-\\d{2}-clean.(\\d).zip");
+        "\\d{4}-\\d{2}-\\d{2}-clean(\\.\\d)(.zip)?");
   }
 
   @Test
   public void dailyChronologSizeBasedRollover() throws Exception {
     SizeAndTimeBasedFNATP<Object> sizeAndTimeBasedFNATP = new SizeAndTimeBasedFNATP<Object>();
-    sizeAndTimeBasedFNATP.setMaxFileSize("10");
+    sizeAndTimeBasedFNATP.setMaxFileSize("10000");
     tbfnatp = sizeAndTimeBasedFNATP;
 
     slashCount = 1;
@@ -180,7 +188,8 @@ public class TimeBasedRollingWithArchiveRemovalTest {
     rfa.setRollingPolicy(tbrp);
     rfa.start();
 
-    int ticksPerPeriod = 64;
+    // lots of ticks per period
+    int ticksPerPeriod = 512;
     long runLength = simulatedNumberOfPeriods * ticksPerPeriod;
 
     for (long i = 0; i < runLength; i++) {
@@ -190,11 +199,22 @@ public class TimeBasedRollingWithArchiveRemovalTest {
       tbrp.timeBasedTriggering.setCurrentTime(addTime(tbrp.timeBasedTriggering
           .getCurrentTime(), periodDurationInMillis / ticksPerPeriod));
 
-      if (tbrp.future != null) {
-        tbrp.future.get(200, TimeUnit.MILLISECONDS);
+      // wait every now and then for the compression job
+      // otherwise, we might rollover a file for a given period before a previous
+      // period's compressor had a chance to run
+      if(i % (ticksPerPeriod/2) == 0) {
+        waitForCompression(tbrp);
       }
     }
+    waitForCompression(tbrp);
     rfa.stop();
+  }
+
+  void waitForCompression(TimeBasedRollingPolicy<Object> tbrp)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    if (tbrp.future != null && !tbrp.future.isDone()) {
+      tbrp.future.get(200, TimeUnit.MILLISECONDS);
+    }
   }
 
   void findAllFoldersRecursively(File dir, List<File> fileList) {
@@ -272,7 +292,8 @@ public class TimeBasedRollingWithArchiveRemovalTest {
   // year is 2012, and not 2013 (the current year).
   boolean extraFolder(int numPeriods, int periodsPerEra, int beginPeriod,
       int maxHistory) {
-    int remainder = (beginPeriod + numPeriods) % periodsPerEra;
+    int adjustedBegin = beginPeriod + 1;
+    int remainder = ((adjustedBegin) + numPeriods) % periodsPerEra;
     return (remainder < maxHistory + 1);
   }
 
@@ -324,6 +345,10 @@ public class TimeBasedRollingWithArchiveRemovalTest {
     assertEquals(expectedClassCount, fileList.size());
   }
 
+  // reduce file names differing by index number into the same group
+  // for example, 2009-11-01-clean.0.zip, 2009-11-01-clean.1.zip and
+  // 2009-11-01-clean-2 are reduced into the same string (group)
+  // 2009-11-01-clean
   Set<String> groupByClass(List<File> fileList, String regex) {
     Pattern p = Pattern.compile(regex);
     Set<String> set = new HashSet<String>();
@@ -332,9 +357,10 @@ public class TimeBasedRollingWithArchiveRemovalTest {
       Matcher m = p.matcher(n);
       m.matches();
       int begin = m.start(1);
-      int end = m.end(1);
-      set.add(n.substring(0, begin) + n.substring(end));
+      String reduced = n.substring(0, begin);
+      set.add(reduced);
     }
+    System.out.println(set);
     return set;
   }
 

@@ -15,8 +15,8 @@ package ch.qos.logback.classic.control;
 
 import java.util.LinkedList;
 
-import ch.qos.logback.classic.ClassicConstants;
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.core.CoreConstants;
 
 public class ScenarioMaker {
 
@@ -76,7 +76,7 @@ public class ScenarioMaker {
             childName = ScenarioRandomUtil.randomId();
             count += childName.length();
           } else {
-            childName = loggerName + ClassicConstants.LOGGER_SEPARATOR
+            childName = loggerName + CoreConstants.DOT
                 + ScenarioRandomUtil.randomId();
             count += childName.length();
           }

@@ -13,27 +13,29 @@
  */
 package ch.qos.logback.classic.issue.lbclassic154;
 
-import ch.qos.logback.core.AppenderBase;
-import ch.qos.logback.classic.Logger;
+import org.slf4j.Logger;
+
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-
+import ch.qos.logback.core.AppenderBase;
 
 /**
  *
+ * An appender which calls logback recursively
+ *
+ * @author Ralph Goers
  */
-public class LoggingAppender extends AppenderBase<ILoggingEvent>
-{
-    Logger logger;
 
-    public void start()
-    {
-        super.start();
-        logger = ((LoggerContext)getContext()).getLogger("Ignore");
-    }
+public class LoggingAppender extends AppenderBase<ILoggingEvent> {
 
-    protected void append(ILoggingEvent eventObject)
-    {
-        logger.debug("Ignore this");
-    }
+  Logger logger;
+
+  public void start() {
+    super.start();
+    logger = ((LoggerContext) getContext()).getLogger("Ignore");
+  }
+
+  protected void append(ILoggingEvent eventObject) {
+    logger.debug("Ignore this");
+  }
 }

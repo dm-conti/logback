@@ -45,7 +45,9 @@ public abstract class GenericConfigurator extends ContextAwareBase {
       informContextOfURLUsedForConfiguration(url);
       URLConnection urlConnection = url.openConnection();
       // per http://jira.qos.ch/browse/LBCORE-105
-      urlConnection.setDefaultUseCaches(false);
+      // per http://jira.qos.ch/browse/LBCORE-127
+      urlConnection.setUseCaches(false);
+      
       InputStream in = urlConnection.getInputStream();
       doConfigure(in);
       in.close();
@@ -120,7 +122,7 @@ public abstract class GenericConfigurator extends ContextAwareBase {
     recorder.recordEvents(inputSource);
     buildInterpreter();
     // disallow simultaneous configurations of the same context
-    synchronized (context) {
+    synchronized (context.getConfigurationLock()) {
       interpreter.play(recorder.saxEventList);
     }
   }

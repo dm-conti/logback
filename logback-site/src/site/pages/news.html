@@ -28,7 +28,7 @@
 
     <hr width="80%" align="center" />
 
-    <h3>13th of November 2009 - Release of version 0.9.18</h3>
+    <h3>3rd of December 2009 - Release of version 0.9.18</h3>
 
     <p>After a very long investigation resulting in somewhat a better
     understanding of licensing issues, logback is now <a
@@ -36,10 +36,36 @@
     2.1.
     </p>
 
+    <p>Due to a clerical error <a
+    href="http://jira.qos.ch/browse/LBCORE-26">LBCORE-26</a> has
+    re-raised its ugly head. It has now been tamed for good.</p>
+
     <p>Fixed Private-Package and Export-Package sections in
     logback-classic.jar MANIFEST as reported in <a
     href="http://jira.qos.ch/browse/LBCLASSIC-165">LBCLASSIC-165</a>
-    by applying the relavant patch supplied by Hugues Malphettes.
+    and <a
+    href="http://jira.qos.ch/browse/LBCLASSIC-121">LBCLASSIC-121</a>
+    by applying the relavant patches supplied by Hugues Malphettes.
+    </p>
+
+    <p>Made the OSGi import declerations for Janino and javax optional
+    as proposed by David Varnes in <a
+    href="http://jira.qos.ch/browse/LBCORE-101">LBCORE-101</a>.</p>
+
+    <p><code>ReconfigureOnChangeFilter</code> did not pick up changes
+    for configuration files containing spaces. This issue was reported
+    in <a href="http://jira.qos.ch/browse/LBCORE-119">LBCORE-119</a>
+    by Anders Wallgren.
+    </p>
+
+    <p>Added tests cases which run logback artifacts as bundles within
+    Felix. This should solve a series of problems related to OSGi.</p>
+
+    <p>When ill-formed configuration files fragments were included in
+    another configuration file, the included file was not closed
+    correctly. This issue was reported in <a
+    href="http://jira.qos.ch/browse/LBCORE-122">LBCORE-122</a> by
+    Michael Franz.
     </p>
 
     <p>JaninoEventEvaluator now passes the throwable associated with
@@ -49,6 +75,33 @@
     as reported by Hontv&aacute;ri J&oacute;zsef. See <a
     href="manual/filters.html#evalutatorFilter">EvaluatorFilter
     documentation</a> for more details.</p>
+
+    <p>The name of the log file nested within .zip archives was
+    incorrectly set to be that of the tmp file logback creates during
+    compression. Anders Wallgren reported and posted an appropriate
+    patch for this problem in <a
+    href="http://jira.qos.ch/browse/LBCORE-98">LBCORE-98</a>.  The
+    nested file is now named after the zip archive file. Analysis
+    showed that this was an appropriate strategy in all the cases we
+    considered.</p>
+
+    <p>Fixed <a
+    href="http://jira.qos.ch/browse/LBCLASSIC-149">LBCLASSIC-149</a>. The
+    ContextNameConverter now correctly uses the context name of the
+    event instead of its own context name.
+    </p>
+
+    <p>When a logger is named after an inner class, the '$' is used as
+    a separator, instead of the usual '.'. This fixes the level
+    inheritence issue described in <a
+    href="http://jira.qos.ch/browse/LBCLASSIC-102">LBCLASSIC-102</a>
+    and as reported by Joern Huxhorn.</p>
+
+    <p>Fixed deadlock issue observed with appender which invoke
+    loggers as reported in <a
+    href="http://jira.qos.ch/browse/LBCLASSIC-154">LBCLASSIC-154</a>
+    by Andrew Perrine and debugged by Ralph Goers who also proposed
+    the relevant patch.</p>
 
     <hr width="80%" align="center" />
 
