@@ -21,7 +21,7 @@ public class SampleFilter extends Filter<ILoggingEvent> {
 
   @Override
   public FilterReply decide(ILoggingEvent event) {
-    if (event.getMessage() != null && event.getMessage().contains("sample")) {
+    if (event.getMessage() != null && event.getMessage().getMessageFormat().contains("sample")) {
       return FilterReply.ACCEPT;
     } else {
       return FilterReply.NEUTRAL;

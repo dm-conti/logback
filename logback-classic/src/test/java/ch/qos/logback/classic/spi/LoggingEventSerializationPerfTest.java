@@ -89,15 +89,6 @@ public class LoggingEventSerializationPerfTest {
       return;
     }
     TrivialLoggingEventBuilder builder = new TrivialLoggingEventBuilder();
-    try {
-      FileOutputStream fos = new FileOutputStream("target/LoggingEvent.dat");
-      ObjectOutputStream tos = new ObjectOutputStream(fos);
-      tos.writeObject(LoggingEventVO.build((ILoggingEvent) builder.build(1)));
-      tos.flush();
-      tos.close();
-    } catch (IOException ex) {
-      ex.printStackTrace();
-    }
 
     for (int i = 0; i < 3; i++) {
       doLoop(builder, LOOP_LEN);

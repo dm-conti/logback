@@ -18,16 +18,16 @@ import ch.qos.logback.core.LayoutBase;
 
 
 /**
- * 
+ *
  * A very simple logback-classic layout which formats a logging event
  * by returning the message contained therein.
- * 
+ *
  * @author Ceki G&uuml;lc&uuml;
  *
  */
 public class TrivialLogbackLayout extends LayoutBase<ILoggingEvent> {
 
   public String doLayout(ILoggingEvent loggingEvent) {
-    return loggingEvent.getMessage();
+    return loggingEvent.getMessage().getFormattedMessage();
   }
 }
