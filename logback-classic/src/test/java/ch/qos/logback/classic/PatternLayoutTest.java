@@ -36,6 +36,7 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.pattern.parser.AbstractPatternLayoutBaseTest;
 import ch.qos.logback.core.testUtil.StringListAppender;
+import org.slf4j.message.SimpleMessage;
 
 public class PatternLayoutTest extends AbstractPatternLayoutBaseTest {
 
@@ -43,7 +44,7 @@ public class PatternLayoutTest extends AbstractPatternLayoutBaseTest {
   private LoggerContext lc = new LoggerContext();
   Logger logger = lc.getLogger(ConverterTest.class);
   Logger root = lc.getLogger(Logger.ROOT_LOGGER_NAME);
-  
+
   ILoggingEvent le;
   List optionList = new ArrayList();
 
@@ -61,7 +62,7 @@ public class PatternLayoutTest extends AbstractPatternLayoutBaseTest {
   ILoggingEvent makeLoggingEvent(Exception ex) {
     return new LoggingEvent(
         ch.qos.logback.core.pattern.FormattingConverter.class.getName(),
-        logger, Level.INFO, "Some message", ex, null);
+        logger, Level.INFO, new SimpleMessage("Some message"), ex);
   }
 
   @Override
@@ -110,7 +111,7 @@ public class PatternLayoutTest extends AbstractPatternLayoutBaseTest {
     pl.setPattern("%property{a}");
     pl.start();
     lc.putProperty("a", "b");
-    
+
     String val = pl.doLayout(getEventObject());
     assertEquals("b", val);
   }
@@ -174,6 +175,6 @@ public class PatternLayoutTest extends AbstractPatternLayoutBaseTest {
     StringListAppender sla = (StringListAppender)    root.getAppender("LIST");
     assertNotNull(sla);
     assertEquals(1, sla.strList.size());
-    assertEquals(SampleConverter.SAMPLE_STR+" - "+msg, sla.strList.get(0)); 
+    assertEquals(SampleConverter.SAMPLE_STR+" - "+msg, sla.strList.get(0));
   }
 }

@@ -35,6 +35,7 @@ import ch.qos.logback.core.spi.LifeCycle;
 import ch.qos.logback.core.status.StatusListener;
 import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.status.WarnStatus;
+import org.slf4j.message.Message;
 
 /**
  * LoggerContext glues many of the logback-classic components together. In
@@ -42,7 +43,7 @@ import ch.qos.logback.core.status.WarnStatus;
  * directly or indirecty to a LoggerContext instance. Just as importantly
  * LoggerContext implements the {@link ILoggerFactory} acting as the
  * manufacturing source of {@link Logger} instances.
- * 
+ *
  * @author Ceki Gulcu
  */
 public class LoggerContext extends ContextBase implements ILoggerFactory,
@@ -168,7 +169,7 @@ public class LoggerContext extends ContextBase implements ILoggerFactory,
   /**
    * Check if the named logger exists in the hierarchy. If so return its
    * reference, otherwise returns <code>null</code>.
-   * 
+   *
    * @param name
    *          the name of the logger to search for.
    */
@@ -245,7 +246,19 @@ public class LoggerContext extends ContextBase implements ILoggerFactory,
     turboFilterList.clear();
   }
 
-  final FilterReply getTurboFilterChainDecision_0_3OrMore(final Marker marker,
+  final FilterReply getTurboFilterChainDecision(final Marker marker,
+      final Logger logger, final Level level, final Message msg,
+      final Throwable t) {
+    if (turboFilterList.size() == 0) {
+      return FilterReply.NEUTRAL;
+    }
+    String message = (msg == null) ? null : msg.getMessageFormat();
+    Object[] params = (msg == null) ? null : msg.getParameters();
+    return turboFilterList.getTurboFilterChainDecision(marker, logger, level,
+        message, params, t);
+  }
+
+  final FilterReply getTurboFilterChainDecision(final Marker marker,
       final Logger logger, final Level level, final String format,
       final Object[] params, final Throwable t) {
     if (turboFilterList.size() == 0) {
@@ -255,7 +268,7 @@ public class LoggerContext extends ContextBase implements ILoggerFactory,
         format, params, t);
   }
 
-  final FilterReply getTurboFilterChainDecision_1(final Marker marker,
+  final FilterReply getTurboFilterChainDecision(final Marker marker,
       final Logger logger, final Level level, final String format,
       final Object param, final Throwable t) {
     if (turboFilterList.size() == 0) {
@@ -265,7 +278,7 @@ public class LoggerContext extends ContextBase implements ILoggerFactory,
         format, new Object[] { param }, t);
   }
 
-  final FilterReply getTurboFilterChainDecision_2(final Marker marker,
+  final FilterReply getTurboFilterChainDecision(final Marker marker,
       final Logger logger, final Level level, final String format,
       final Object param1, final Object param2, final Throwable t) {
     if (turboFilterList.size() == 0) {

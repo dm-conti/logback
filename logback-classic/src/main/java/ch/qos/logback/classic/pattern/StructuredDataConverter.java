@@ -5,10 +5,10 @@ import java.util.Map;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.PropertyContainer;
 import ch.qos.logback.core.util.OptionHelper;
-import org.slf4j.StructuredData;
 import org.slf4j.MDC;
-import org.slf4j.StructuredDataId;
-import org.slf4j.StructuredDataImpl;
+import org.slf4j.message.Message;
+import org.slf4j.message.StructuredDataId;
+import org.slf4j.message.StructuredDataMessage;
 
 /**
  * Converts StructuredData into various formats:
@@ -81,17 +81,17 @@ public class StructuredDataConverter extends ClassicConverter {
 
   @Override
   public String convert(ILoggingEvent event) {
-    Object objects[] = event.getArgumentArray();
+    Message message = event.getMessage();
     Map mdc = event.getMDCPropertyMap();
 
-    boolean isStructured = objects != null && objects.length == 1 && objects[0] instanceof StructuredData;
+    boolean isStructured = message != null && message instanceof StructuredDataMessage;
     boolean isMDC = includeMDC && mdc != null && mdc.size() > 0;
 
     if (!isStructured && !isMDC) {
       return EMPTY_STRING;
     }
 
-    StructuredData data = (StructuredData) objects[0];
+    StructuredDataMessage data = (StructuredDataMessage) message;
 
     boolean leadingDone = false;
     StructuredDataId id = null;
@@ -126,7 +126,7 @@ public class StructuredDataConverter extends ClassicConverter {
         int ein = id == null || id.isReserved() ? enterpriseNumber : id.getEnterpriseNumber();
         if (ein > 0) {
           id = new StructuredDataId("mdc", ein, null, null);
-          StructuredData mdcData = new StructuredDataImpl(id, null, null);
+          StructuredDataMessage mdcData = new StructuredDataMessage(id, null, null);
           mdcData.putAll(mdc);
           String str = mdcData.asString(format, id);
           if (leadingSpace && !leadingDone) {
@@ -146,7 +146,7 @@ public class StructuredDataConverter extends ClassicConverter {
 
     String msg = null;
     if (key.equalsIgnoreCase(MESSAGE)) {
-      msg = OptionHelper.substVars(data.getMessage(), new SDContainer(data));
+      msg = OptionHelper.substVars(data.getMessageFormat(), new SDContainer(data));
     } else if (key.equalsIgnoreCase(ID)) {
       msg = data.getId().toString();
     } else if (key.equalsIgnoreCase(TYPE)) {
@@ -162,9 +162,9 @@ public class StructuredDataConverter extends ClassicConverter {
 
   private class SDContainer implements PropertyContainer
   {
-    private final StructuredData data;
+    private final StructuredDataMessage data;
 
-    public SDContainer(StructuredData data) {
+    public SDContainer(StructuredDataMessage data) {
       this.data = data;
     }
 

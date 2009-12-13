@@ -20,9 +20,9 @@ import java.io.Serializable;
 import java.util.Map;
 
 import org.slf4j.Marker;
-import org.slf4j.helpers.MessageFormatter;
 
 import ch.qos.logback.classic.Level;
+import org.slf4j.message.Message;
 
 /**
  * A read/write and serializable implementation of {@link ILoggingEvent}.
@@ -43,19 +43,13 @@ public class PubLoggingEventVO implements ILoggingEvent, Serializable {
   public LoggerContextVO loggerContextVO;
 
   public transient Level level;
-  public String message;
-
-  private transient String formattedMessage;
-
-  public Object[] argumentArray;
+  public Message message;
 
   public IThrowableProxy throwableProxy;
   public StackTraceElement[] callerDataArray;
   public Marker marker;
   public Map<String, String> mdcPropertyMap;
   public long timeStamp;
-
-
 
   public String getThreadName() {
     return threadName;
@@ -73,26 +67,15 @@ public class PubLoggingEventVO implements ILoggingEvent, Serializable {
     return level;
   }
 
-  public String getMessage() {
+  public Message getMessage() {
     return message;
   }
 
   public String getFormattedMessage() {
-    if (formattedMessage != null) {
-      return formattedMessage;
+    if (message == null) {
+      return null;
     }
-
-    if (argumentArray != null) {
-      formattedMessage = MessageFormatter.arrayFormat(message, argumentArray);
-    } else {
-      formattedMessage = message;
-    }
-
-    return formattedMessage;
-  }
-
-  public Object[] getArgumentArray() {
-    return argumentArray;
+    return message.getFormattedMessage();
   }
 
   public IThrowableProxy getThrowableProxy() {
@@ -115,8 +98,6 @@ public class PubLoggingEventVO implements ILoggingEvent, Serializable {
     return timeStamp;
   }
 
-
-
   public long getContextBirthTime() {
     return loggerContextVO.getBirthTime();
   }
@@ -135,20 +116,7 @@ public class PubLoggingEventVO implements ILoggingEvent, Serializable {
   private void writeObject(ObjectOutputStream out) throws IOException {
     out.defaultWriteObject();
     out.writeInt(level.levelInt);
-    if (argumentArray != null) {
-      int len = argumentArray.length;
-      out.writeInt(len);
-      for (int i = 0; i < argumentArray.length; i++) {
-        if (argumentArray[i] != null) {
-          out.writeObject(argumentArray[i].toString());
-        } else {
-          out.writeObject(NULL_ARGUMENT_ARRAY_ELEMENT);
-        }
-      }
-    } else {
-      out.writeInt(NULL_ARGUMENT_ARRAY);
-    }
-
+    out.writeObject(message);
   }
 
   private void readObject(ObjectInputStream in) throws IOException,
@@ -156,17 +124,7 @@ public class PubLoggingEventVO implements ILoggingEvent, Serializable {
     in.defaultReadObject();
     int levelInt = in.readInt();
     level = Level.toLevel(levelInt);
-
-    int argArrayLen = in.readInt();
-    if (argArrayLen != NULL_ARGUMENT_ARRAY) {
-      argumentArray = new String[argArrayLen];
-      for (int i = 0; i < argArrayLen; i++) {
-        Object val = in.readObject();
-        if (!NULL_ARGUMENT_ARRAY_ELEMENT.equals(val)) {
-          argumentArray[i] = val;
-        }
-      }
-    }
+    message = (Message) in.readObject();
   }
 
   @Override

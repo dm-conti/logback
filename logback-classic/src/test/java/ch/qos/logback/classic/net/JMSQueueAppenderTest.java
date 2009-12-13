@@ -28,13 +28,14 @@ import ch.qos.logback.classic.util.MockInitialContext;
 import ch.qos.logback.classic.util.MockInitialContextFactory;
 import ch.qos.logback.core.ContextBase;
 import ch.qos.logback.core.spi.PreSerializationTransformer;
+import org.slf4j.message.SimpleMessage;
 
 public class JMSQueueAppenderTest extends TestCase {
 
   ch.qos.logback.core.Context context;
   JMSQueueAppender appender;
   PreSerializationTransformer<ILoggingEvent> pst = new LoggingEventPreSerializationTransformer();
-  
+
   @Override
   protected void setUp() throws Exception {
     context = new ContextBase();
@@ -45,11 +46,11 @@ public class JMSQueueAppenderTest extends TestCase {
     appender.queueBindingName = "testQueue";
     appender.setProviderURL("url");
     appender.setInitialContextFactoryName(MockInitialContextFactory.class.getName());
-    
+
     MockInitialContext mic = MockInitialContextFactory.getContext();
     mic.map.put(appender.qcfBindingName, new MockQueueConnectionFactory());
     mic.map.put(appender.queueBindingName, new MockQueue(appender.queueBindingName));
-    
+
     super.setUp();
   }
 
@@ -60,12 +61,12 @@ public class JMSQueueAppenderTest extends TestCase {
     super.tearDown();
   }
 
-  public void testAppendOk() { 
+  public void testAppendOk() {
     appender.start();
 
     ILoggingEvent le = createLoggingEvent();
     appender.append(le);
-    
+
     MockQueueSender qs = (MockQueueSender)appender.queueSender;
     assertEquals(1, qs.getMessageList().size());
     ObjectMessage message = (ObjectMessage) qs.getMessageList().get(0);
@@ -79,10 +80,10 @@ public class JMSQueueAppenderTest extends TestCase {
 
   public void testAppendFailure() {
     appender.start();
-    
+
     //make sure the append method does not work
     appender.queueSender = null;
-    
+
     ILoggingEvent le = createLoggingEvent();
     for (int i = 1; i <= 3; i++) {
       appender.append(le);
@@ -99,43 +100,43 @@ public class JMSQueueAppenderTest extends TestCase {
     //method, minus the providerURL
     appender.setProviderURL(null);
     appender.start();
-    
+
     assertTrue(appender.isStarted());
-    
+
     try {
       assertEquals(appender.queueBindingName, appender.queueSender.getQueue().getQueueName());
     } catch (Exception e) {
       fail();
     }
   }
-  
+
   public void testStartUserPass() {
     appender.setUserName("test");
     appender.setPassword("test");
-    
+
     appender.start();
-    
+
     assertTrue(appender.isStarted());
-    
+
     try {
       assertEquals(appender.queueBindingName, appender.queueSender.getQueue().getQueueName());
     } catch (Exception e) {
       fail();
     }
   }
-  
+
   public void testStartFails() {
     appender.queueBindingName = null;
-    
+
     appender.start();
-    
+
     assertFalse(appender.isStarted());
   }
 
   private ILoggingEvent createLoggingEvent() {
     LoggingEvent le = new LoggingEvent();
     le.setLevel(Level.DEBUG);
-    le.setMessage("test message");
+    le.setMessage(new SimpleMessage("test message"));
     le.setTimeStamp(System.currentTimeMillis());
     le.setThreadName(Thread.currentThread().getName());
     return le;

@@ -16,6 +16,7 @@ package ch.qos.logback.classic.spi;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
@@ -31,12 +32,12 @@ import ch.qos.logback.classic.net.testObjectBuilders.TrivialLoggingEventBuilder;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.testUtil.Env;
 
-// As of logback 0.9.15, 
+// As of logback 0.9.15,
 //   average time  per logging event: 3979 nanoseconds
 //   size 545'648 bytes
-// 
+//
 // Using LoggingEventDO
-// 
+//
 //   average time  per logging event: 4052 nanoseconds
 //   average size=45,  with params, average size=136
 //
@@ -88,6 +89,15 @@ public class LoggingEventSerializationPerfTest {
       return;
     }
     TrivialLoggingEventBuilder builder = new TrivialLoggingEventBuilder();
+    try {
+      FileOutputStream fos = new FileOutputStream("target/LoggingEvent.dat");
+      ObjectOutputStream tos = new ObjectOutputStream(fos);
+      tos.writeObject(LoggingEventVO.build((ILoggingEvent) builder.build(1)));
+      tos.flush();
+      tos.close();
+    } catch (IOException ex) {
+      ex.printStackTrace();
+    }
 
     for (int i = 0; i < 3; i++) {
       doLoop(builder, LOOP_LEN);
@@ -100,7 +110,7 @@ public class LoggingEventSerializationPerfTest {
     long averageSize = (long) (noos.size() / (LOOP_LEN));
     System.out.println("noos size " + noos.size() + " average size="
         + averageSize);
-    double averageSizeLimit = 60;
+    double averageSizeLimit = 70;
 
     assertTrue("average size " + averageSize + " should be less than "
         + averageSizeLimit, averageSizeLimit > averageSize);
@@ -128,7 +138,7 @@ public class LoggingEventSerializationPerfTest {
     System.out.println("noos size " + noos.size() + " average size="
         + averageSize);
 
-    double averageSizeLimit = 160;
+    double averageSizeLimit = 170;
     assertTrue("averageSize " + averageSize + " should be less than "
         + averageSizeLimit, averageSizeLimit > averageSize);
 

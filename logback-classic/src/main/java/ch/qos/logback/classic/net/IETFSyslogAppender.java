@@ -18,7 +18,6 @@ import java.net.UnknownHostException;
 import java.net.SocketException;
 
 import ch.qos.logback.classic.PatternLayout;
-import ch.qos.logback.classic.net.IETFSyslogLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
@@ -27,7 +26,8 @@ import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.net.SyslogAppenderBase;
 import ch.qos.logback.core.net.SyslogWriter;
-import org.slf4j.StructuredData;
+import org.slf4j.message.Message;
+import org.slf4j.message.StructuredDataMessage;
 
 /**
  * This appender can be used to send messages to a remote syslog daemon in IETF Syslog format (RFC 5424).
@@ -86,8 +86,8 @@ public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
   }
 
   protected Layout<ILoggingEvent> getLayout(ILoggingEvent event) {
-    Object[] args = event.getArgumentArray();
-    if (args != null && args.length == 1 && args[0] instanceof StructuredData) {
+    Message msg = event.getMessage();
+    if (msg != null && msg instanceof StructuredDataMessage) {
       return structuredLayout;
     }
     return defaultLayout;

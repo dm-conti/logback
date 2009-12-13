@@ -34,6 +34,7 @@ import ch.qos.logback.core.read.ListAppender;
 import ch.qos.logback.core.sift.AppenderTracker;
 import ch.qos.logback.core.testUtil.StringListAppender;
 import ch.qos.logback.core.util.StatusPrinter;
+import org.slf4j.message.SimpleMessage;
 
 public class SiftingAppenderTest {
 
@@ -70,7 +71,7 @@ public class SiftingAppenderTest {
     assertNotNull(listAppender);
     List<ILoggingEvent> eventList = listAppender.list;
     assertEquals(1, listAppender.list.size());
-    assertEquals("smoke", eventList.get(0).getMessage());
+    assertEquals("smoke", eventList.get(0).getMessage().getMessageFormat());
   }
 
   @Test
@@ -104,11 +105,10 @@ public class SiftingAppenderTest {
     assertNotNull(listAppender);
     List<ILoggingEvent> eventList = listAppender.list;
     assertEquals(1, listAppender.list.size());
-    assertEquals("smoke", eventList.get(0).getMessage());
+    assertEquals("smoke", eventList.get(0).getMessage().getMessageFormat());
 
     MDC.remove(mdcKey);
-    LoggingEvent le = new LoggingEvent("x", logger, Level.INFO, "hello", null,
-        null);
+    LoggingEvent le = new LoggingEvent("x", logger, Level.INFO, new SimpleMessage("hello"), null);
     le.setTimeStamp(timestamp + AppenderTracker.THRESHOLD * 2);
     ha.doAppend(le);
     assertFalse(listAppender.isStarted());

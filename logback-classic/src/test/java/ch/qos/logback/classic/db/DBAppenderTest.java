@@ -31,6 +31,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.db.DriverManagerConnectionSource;
+import org.slf4j.message.SimpleMessage;
 
 public class DBAppenderTest  {
 
@@ -40,7 +41,7 @@ public class DBAppenderTest  {
   DriverManagerConnectionSource connectionSource;
 
   DBAppenderTestFixture dbAppenderTestFixture;
-  
+
   @Before
   public void setUp() throws SQLException {
     dbAppenderTestFixture = new DBAppenderTestFixture();
@@ -62,7 +63,7 @@ public class DBAppenderTest  {
     appender.setConnectionSource(connectionSource);
     appender.start();
   }
-  
+
   @After
   public void tearDown() throws SQLException {
     logger = null;
@@ -78,7 +79,7 @@ public class DBAppenderTest  {
 
     appender.append(event);
     //StatusPrinter.print(lc.getStatusManager());
-    
+
     Statement stmt = connectionSource.getConnection().createStatement();
     ResultSet rs = null;
     rs = stmt.executeQuery("SELECT * FROM logging_event");
@@ -96,17 +97,17 @@ public class DBAppenderTest  {
     } else {
       fail("No row was inserted in the database");
     }
-    
+
     rs.close();
     stmt.close();
   }
-  
+
   @Test
   public void testAppendThrowable() throws SQLException {
     ILoggingEvent event = createLoggingEvent();
 
     appender.append(event);
-    
+
     Statement stmt = connectionSource.getConnection().createStatement();
     ResultSet rs = null;
     rs = stmt.executeQuery("SELECT * FROM logging_event_exception where event_id = 0");
@@ -115,18 +116,18 @@ public class DBAppenderTest  {
       assertEquals(event.getThrowableProxy().getStackTraceElementProxyArray()[i].toString(), rs.getString(3));
       i++;
     }
-    
+
     rs.close();
     stmt.close();
   }
-  
+
   @Test
   public void testContextInfo() throws SQLException {
     ILoggingEvent event = createLoggingEvent();
     lc.putProperty("testKey1", "testValue1");
-    
+
     appender.append(event);
-    
+
     Statement stmt = connectionSource.getConnection().createStatement();
     ResultSet rs = null;
     rs = stmt.executeQuery("SELECT * FROM logging_event_property where event_id = 0");
@@ -136,18 +137,18 @@ public class DBAppenderTest  {
       assertEquals(map.get(key), rs.getString(3));
       //System.out.println("value: " + map.get(key));
     }
-    
+
     rs.close();
     stmt.close();
   }
-  
+
   @Test
   public void testAppendMultipleEvents() throws SQLException {
     for (int i = 0; i < 10; i++) {
       ILoggingEvent event = createLoggingEvent();
       appender.append(event);
     }
-    
+
     Statement stmt = connectionSource.getConnection().createStatement();
     ResultSet rs = null;
     rs = stmt.executeQuery("SELECT * FROM logging_event");
@@ -156,15 +157,15 @@ public class DBAppenderTest  {
       count++;
     }
     assertEquals(10, count);
-    
+
     rs.close();
     stmt.close();
   }
-  
+
 
   private ILoggingEvent createLoggingEvent() {
     ILoggingEvent le = new LoggingEvent(this.getClass().getName(), logger,
-        Level.DEBUG, "test message", new Exception("test Ex"), null);
+        Level.DEBUG, new SimpleMessage("test message"), new Exception("test Ex"));
     return le;
   }
 }

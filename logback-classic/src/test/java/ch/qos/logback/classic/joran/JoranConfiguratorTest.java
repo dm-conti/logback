@@ -63,7 +63,7 @@ public class JoranConfiguratorTest {
     logger.debug(msg);
     assertEquals(1, listAppender.list.size());
     ILoggingEvent le = (ILoggingEvent) listAppender.list.get(0);
-    assertEquals(msg, le.getMessage());
+    assertEquals(msg, le.getMessage().getMessageFormat());
   }
 
   @Test
@@ -185,7 +185,7 @@ public class JoranConfiguratorTest {
     assertEquals(1, listAppender.list.size());
     ILoggingEvent back = listAppender.list.get(0);
     assertEquals(Level.WARN, back.getLevel());
-    assertEquals("hello", back.getMessage());
+    assertEquals("hello", back.getMessage().getMessageFormat());
   }
 
   @Test
@@ -205,7 +205,7 @@ public class JoranConfiguratorTest {
     assertEquals(1, listAppender.list.size());
     ILoggingEvent back = listAppender.list.get(0);
     assertEquals(Level.WARN, back.getLevel());
-    assertEquals("hello", back.getMessage());
+    assertEquals("hello", back.getMessage().getMessageFormat());
   }
 
   @Test
@@ -225,7 +225,7 @@ public class JoranConfiguratorTest {
 
     assertEquals(1, listAppender.list.size());
     ILoggingEvent le = (ILoggingEvent) listAppender.list.get(0);
-    assertEquals("hello user2", le.getMessage());
+    assertEquals("hello user2", le.getMessage().getMessageFormat());
   }
 
   @Test
@@ -248,9 +248,9 @@ public class JoranConfiguratorTest {
 
     assertEquals(2, listAppender.list.size());
     ILoggingEvent le = (ILoggingEvent) listAppender.list.get(0);
-    assertEquals("hello user1", le.getMessage());
+    assertEquals("hello user1", le.getMessage().getMessageFormat());
     le = (ILoggingEvent) listAppender.list.get(1);
-    assertEquals("hello user2", le.getMessage());
+    assertEquals("hello user2", le.getMessage().getMessageFormat());
   }
 
   // Tests whether ConfigurationAction is installing ReconfigureOnChangeFilter
@@ -275,18 +275,18 @@ public class JoranConfiguratorTest {
     assertTrue(checker.isErrorFree());
     assertTrue(checker.containsMatch("Resetting and reconfiguring context"));
   }
-  
+
   @Test
   public void timestamp() throws JoranException, IOException, InterruptedException {
 
     String configFileAsStr = TeztConstants.TEST_DIR_PREFIX
         + "input/joran/timestamp.xml";
     configure(configFileAsStr);
-    
+
     String r = loggerContext.getProperty("testTimestamp");
     assertNotNull(r);
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM");
-    String expected = sdf.format(new Date()); 
+    String expected = sdf.format(new Date());
     assertEquals("expected \""+expected+"\" but got "+r, expected, r);
   }
 

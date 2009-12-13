@@ -36,6 +36,7 @@ import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.net.SyslogConstants;
 import ch.qos.logback.core.pattern.DynamicConverter;
 import ch.qos.logback.core.pattern.FormatInfo;
+import org.slf4j.message.SimpleMessage;
 
 public class ConverterTest {
 
@@ -50,7 +51,7 @@ public class ConverterTest {
   LoggingEvent makeLoggingEvent(Exception ex) {
     return new LoggingEvent(
         ch.qos.logback.core.pattern.FormattingConverter.class.getName(),
-        logger, Level.INFO, "Some message", ex, null);
+        logger, Level.INFO, new SimpleMessage("Some message"), ex);
   }
 
   Exception getException(String msg, Exception cause) {
@@ -74,7 +75,7 @@ public class ConverterTest {
       StringBuffer buf = new StringBuffer();
       converter.write(buf, le);
       // the number below should be the line number of the previous line
-      assertEquals("75", buf.toString());
+      assertEquals("76", buf.toString());
     }
   }
 
@@ -175,15 +176,15 @@ public class ConverterTest {
     converter.setOptionList(this.optionList);
     converter.start();
     StringBuffer buf = new StringBuffer();
-    
+
     char c = 'a';
     int extraParts = 3;
     int totalParts = ClassicConstants.MAX_DOTS + extraParts;
     StringBuilder loggerNameBuf = new StringBuilder();
     StringBuilder witness = new StringBuilder();
-    
+
     for(int i = 0; i < totalParts ; i++) {
-      loggerNameBuf.append(c).append(c).append(c); 
+      loggerNameBuf.append(c).append(c).append(c);
       if(i < ClassicConstants.MAX_DOTS) {
         witness.append(c);
       } else {
@@ -194,12 +195,12 @@ public class ConverterTest {
     }
     loggerNameBuf.append("zzzzzz");
     witness.append("zzzzzz");
-    
+
     le.setLoggerName(loggerNameBuf.toString());
     converter.write(buf, le);
     assertEquals(witness.toString(), buf.toString());
   }
-  
+
   @Test
   public void testClass() {
     DynamicConverter<ILoggingEvent> converter = new ClassOfCallerConverter();
@@ -360,15 +361,15 @@ public class ConverterTest {
     LoggerContext lcOther = new LoggerContext();
     lcOther.setName("another");
     converter.setContext(lcOther);
-    
+
     lc.setName("aValue");
     ILoggingEvent event = makeLoggingEvent(null);
 
     String result = converter.convert(event);
     assertEquals("aValue", result);
   }
-  
-  @Test 
+
+  @Test
   public void contextProperty() {
     PropertyConverter converter = new PropertyConverter();
     converter.setContext(lc);

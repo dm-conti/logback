@@ -24,6 +24,7 @@ import org.slf4j.impl.LogbackMDCAdapter;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+import org.slf4j.message.Message;
 
 /**
  * The internal representation of logging events. When an affirmative decision
@@ -67,14 +68,7 @@ public class LoggingEvent implements ILoggingEvent {
    */
   private transient Level level;
 
-  private String message;
-
-  // we gain significant space at serialization time by marking
-  // formattedMessage as transient and constructing it lazily in
-  // getFormmatedMessage()
-  private transient String formattedMessage;
-
-  private transient Object[] argumentArray;
+  private Message message;
 
   private ThrowableProxy throwableProxy;
 
@@ -93,15 +87,14 @@ public class LoggingEvent implements ILoggingEvent {
   public LoggingEvent() {
   }
 
-  public LoggingEvent(String fqcn, Logger logger, Level level, String message,
-      Throwable throwable, Object[] argArray) {
+  public LoggingEvent(String fqcn, Logger logger, Level level, Message msg, Throwable throwable) {
     this.fqnOfLoggerClass = fqcn;
     this.loggerName = logger.getName();
     this.loggerContext = logger.getLoggerContext();
     this.loggerContextVO = loggerContext.getLoggerContextRemoteView();
     this.level = level;
 
-    this.message = message;
+    this.message = msg;
 
     if (throwable != null) {
       this.throwableProxy = new ThrowableProxy(throwable);
@@ -111,26 +104,12 @@ public class LoggingEvent implements ILoggingEvent {
       }
     }
 
-    // bug 85 (we previously failed to set this.argumentArray)
-    this.argumentArray = argArray;
-
     timeStamp = System.currentTimeMillis();
 
     // the case is ugly but under the circumstances acceptable
     LogbackMDCAdapter logbackMDCAdapter = (LogbackMDCAdapter) MDC
         .getMDCAdapter();
     mdcPropertyMap = logbackMDCAdapter.getPropertyMap();
-  }
-
-  public void setArgumentArray(Object[] argArray) {
-    if (this.argumentArray != null) {
-      throw new IllegalStateException("argArray has been already set");
-    }
-    this.argumentArray = argArray;
-  }
-
-  public Object[] getArgumentArray() {
-    return this.argumentArray;
   }
 
   public Level getLevel() {
@@ -208,16 +187,12 @@ public class LoggingEvent implements ILoggingEvent {
     this.loggerContextVO = loggerContextVO;
   }
 
-  public String getMessage() {
+  public Message getMessage() {
     return message;
   }
 
-  public void setMessage(String message) {
-    if (this.message != null) {
-      throw new IllegalStateException(
-          "The message for this event has been set already.");
-    }
-    this.message = message;
+  public void setMessage(Message msg) {
+    this.message = msg;
   }
 
   public long getTimeStamp() {
@@ -279,17 +254,10 @@ public class LoggingEvent implements ILoggingEvent {
   // computer formatted lazy as suggested in
   // http://jira.qos.ch/browse/LBCLASSIC-47
   public String getFormattedMessage() {
-    if (formattedMessage != null) {
-      return formattedMessage;
+    if (message == null) {
+      return null;
     }
-
-    if (argumentArray != null) {
-      formattedMessage = MessageFormatter.arrayFormat(message, argumentArray);
-    } else {
-      formattedMessage = message;
-    }
-
-    return formattedMessage;
+    return message.getFormattedMessage();
   }
 
   public Map<String, String> getMDCPropertyMap() {

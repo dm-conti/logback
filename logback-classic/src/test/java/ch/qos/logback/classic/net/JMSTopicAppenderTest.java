@@ -38,13 +38,14 @@ import ch.qos.logback.classic.util.MockInitialContext;
 import ch.qos.logback.classic.util.MockInitialContextFactory;
 import ch.qos.logback.core.ContextBase;
 import ch.qos.logback.core.spi.PreSerializationTransformer;
+import org.slf4j.message.SimpleMessage;
 
 public class JMSTopicAppenderTest  {
 
   ch.qos.logback.core.Context context;
   JMSTopicAppender appender;
   PreSerializationTransformer<ILoggingEvent> pst = new LoggingEventPreSerializationTransformer();
-  
+
 
   @Before
   public void setUp() throws Exception {
@@ -56,7 +57,7 @@ public class JMSTopicAppenderTest  {
     appender.topicBindingName = "testTopic";
     appender.setProviderURL("url");
     appender.setInitialContextFactoryName(MockInitialContextFactory.class.getName());
-    
+
     MockInitialContext mic = MockInitialContextFactory.getContext();
     mic.map.put(appender.tcfBindingName, new MockTopicConnectionFactory());
     mic.map.put(appender.topicBindingName, new MockTopic(appender.topicBindingName));
@@ -71,12 +72,12 @@ public class JMSTopicAppenderTest  {
   }
 
   @Test
-  public void testAppendOk() { 
+  public void testAppendOk() {
     appender.start();
 
     ILoggingEvent le = createLoggingEvent();
     appender.append(le);
-    
+
     MockTopicPublisher tp = (MockTopicPublisher)appender.topicPublisher;
     assertEquals(1, tp.getMessageList().size());
     ObjectMessage message = (ObjectMessage) tp.getMessageList().get(0);
@@ -91,10 +92,10 @@ public class JMSTopicAppenderTest  {
   @Test
   public void testAppendFailure() {
     appender.start();
-    
+
     //make sure the append method does not work
     appender.topicPublisher = null;
-    
+
     ILoggingEvent le = createLoggingEvent();
     for (int i = 1; i <= 3; i++) {
       appender.append(le);
@@ -172,7 +173,7 @@ public class JMSTopicAppenderTest  {
 
     assertEquals(1, context.getStatusManager().getCount());
   }
-  
+
   @Test
   public void testBuildEnvPropertiesWithPkgNull() {
     appender.setInitialContextFactoryName("icfn");
@@ -202,45 +203,45 @@ public class JMSTopicAppenderTest  {
     //method, minus the providerURL
     appender.setProviderURL(null);
     appender.start();
-    
+
     assertTrue(appender.isStarted());
-    
+
     try {
       assertEquals(appender.topicBindingName, appender.topicPublisher.getTopic().getTopicName());
     } catch (Exception e) {
       fail();
     }
   }
-  
+
   @Test
   public void testStartUserPass() {
     appender.setUserName("test");
     appender.setPassword("test");
-    
+
     appender.start();
-    
+
     assertTrue(appender.isStarted());
-    
+
     try {
       assertEquals(appender.topicBindingName, appender.topicPublisher.getTopic().getTopicName());
     } catch (Exception e) {
       fail();
     }
   }
-  
+
   @Test
   public void testStartFails() {
     appender.topicBindingName = null;
-    
+
     appender.start();
-    
+
     assertFalse(appender.isStarted());
   }
 
   private ILoggingEvent createLoggingEvent() {
     LoggingEvent le = new LoggingEvent();
     le.setLevel(Level.DEBUG);
-    le.setMessage("test message");
+    le.setMessage(new SimpleMessage("test message"));
     le.setTimeStamp(System.currentTimeMillis());
     le.setThreadName(Thread.currentThread().getName());
     return le;

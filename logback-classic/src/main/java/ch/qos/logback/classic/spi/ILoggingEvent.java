@@ -18,6 +18,7 @@ import java.util.Map;
 import org.slf4j.Marker;
 
 import ch.qos.logback.classic.Level;
+import org.slf4j.message.Message;
 
 /**
  * The central interface in logback-classic. In a nutshell, logback-classic is
@@ -32,9 +33,7 @@ public interface ILoggingEvent {
 
   public Level getLevel();
 
-  public String getMessage();
-
-  public Object[] getArgumentArray();
+  public Message getMessage();
 
   public String getFormattedMessage();
 

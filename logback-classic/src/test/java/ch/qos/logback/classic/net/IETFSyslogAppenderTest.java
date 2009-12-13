@@ -16,12 +16,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.MDC;
-import org.slf4j.StructuredData;
-import org.slf4j.StructuredDataImpl;
-import org.slf4j.StructuredDataId;
+
 import org.slf4j.impl.StaticLoggerBinder;
 import org.slf4j.impl.StaticLoggerBinderFriend;
 import org.slf4j.ext.EventLogger;
+import org.slf4j.message.StructuredDataId;
+import org.slf4j.message.StructuredDataMessage;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
@@ -116,9 +116,9 @@ public class IETFSyslogAppenderTest {
     String loggerName = this.getClass().getName();
     Logger logger = lc.getLogger(loggerName);
     logger.addAppender(sa);
-    StructuredData data = new StructuredDataImpl((String) null, "Hello, ${Name}", null);
+    StructuredDataMessage data = new StructuredDataMessage((String) null, "Hello, ${Name}", null);
     data.put("Name", "John Smith");
-    logger.debug("", data);
+    logger.debug(data);
 
     // wait max 2 seconds for mock server to finish. However, it should
     // much sooner than that.
@@ -172,7 +172,7 @@ public class IETFSyslogAppenderTest {
     MDC.clear();
     MDC.put("UserId", "TestUser");
     MDC.put("IpAddress","10.200.10.5");
-    StructuredData data = new StructuredDataImpl(sdId, "Transfer succeeded", "Transfer");
+    StructuredDataMessage data = new StructuredDataMessage(sdId, "Transfer succeeded", "Transfer");
     data.put("FromAccount", "12345601");
     data.put("ToAccount", "12345602");
     data.put("Amount", "55.00");
@@ -196,7 +196,7 @@ public class IETFSyslogAppenderTest {
     assertTrue(msg.startsWith(expected));
 
     String first = "<\\d{3}>1 \\w{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}\\.\\d{1,3}[\\S]* [\\w.-]* [\\w.-]* - [\\w.-]* ";
-    checkRegexMatch(msg, first + "[\\[" + sdId + "( [\\w.-]*=\"[\\w.-]*\")*\\]]+ " + data.getMessage());
+    checkRegexMatch(msg, first + "[\\[" + sdId + "( [\\w.-]*=\"[\\w.-]*\")*\\]]+ " + data.getMessageFormat());
   }
 
   private void checkRegexMatch(String s, String regex) {

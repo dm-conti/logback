@@ -20,8 +20,8 @@ import java.util.GregorianCalendar;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.util.LevelToSyslogSeverity;
 import ch.qos.logback.core.net.SyslogAppenderBase;
-import ch.qos.logback.core.CoreConstants;
-import org.slf4j.StructuredData;
+import org.slf4j.message.Message;
+import org.slf4j.message.StructuredDataMessage;
 
 public class IETFSyslogStartConverter extends ClassicConverter {
 
@@ -95,8 +95,7 @@ public class IETFSyslogStartConverter extends ClassicConverter {
     sb.append(" ");
     sb.append(getProcId());
     sb.append(" ");
-    Object[] args = event.getArgumentArray();
-    String type = getStructuredType(args);
+    String type = getStructuredType(event.getMessage());
     if (type != null) {
       sb.append(type);
     } else if (messageId != null) {
@@ -108,11 +107,11 @@ public class IETFSyslogStartConverter extends ClassicConverter {
     return sb.toString();
   }
 
-  private String getStructuredType(Object[] args) {
-    if (args == null || args.length != 1 || !(args[0] instanceof StructuredData)) {
+  private String getStructuredType(Message msg) {
+    if (msg == null || !(msg instanceof StructuredDataMessage)) {
       return null;
     }
-    return ((StructuredData) args[0]).getType();
+    return ((StructuredDataMessage) msg).getType();
   }
 
   String getProcId() {

@@ -17,6 +17,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import org.slf4j.message.ParameterizedMessage;
 
 public class LoggingEventWithParametersBuilder implements Builder {
 
@@ -32,9 +33,8 @@ public class LoggingEventWithParametersBuilder implements Builder {
 
     Object[] aa = new Object[] { i, "HELLO WORLD [========== ]" + i };
 
-    le.setArgumentArray(aa);
     String msg = MSG + i;
-    le.setMessage(msg);
+    le.setMessage(new ParameterizedMessage(msg, aa));
 
     // compute formatted message
     // this forces le.formmatedMessage to be set (this is the whole point of the

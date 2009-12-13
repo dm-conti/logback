@@ -27,17 +27,17 @@ import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.CoreConstants;
 
 /**
- * 
+ *
  * <p>Usage:
- * 
+ *
  * <p><code>ILoggingEvent[] eventArray = Corpus.makeStandardCorpus();</code>
- * 
+ *
  * <p>if you wish to dump the events into a file, say "/corpus.log" :
- * 
+ *
  * <p> <code>Corpus.dump(eventArray, "/corpus.log");
- * 
+ *
  * <p>For the model behind the corpus, refer to {@link CorpusModel}.
- * 
+ *
  * @author Ceki G&uuml;lc&uuml;
  *
  */
@@ -56,7 +56,7 @@ public class Corpus {
   /**
    * Make a standard corpus. The standard corpus has
    * {@link #STANDARD_CORPUS_SIZE} elements.
-   * 
+   *
    * @return event array representing the standard corpus
    * @throws IOException
    */
@@ -79,9 +79,7 @@ public class Corpus {
       LogStatement logStatement = corpusModel.getRandomLogStatementFromPool();
       e.loggerName = logStatement.loggerName;
       e.level = logStatement.level;
-      e.message = logStatement.mat.message;
-      e.argumentArray = corpusModel
-          .getRandomArgumentArray(logStatement.mat.numberOfArguments);
+      e.message = logStatement.message;
 
       if (withCallerData) {
         e.callerDataArray = corpusModel.getRandomCallerData(
@@ -95,7 +93,7 @@ public class Corpus {
 
   /**
    * Dump the events passed as argument into the file named targetFile.
-   * 
+   *
    * @param eventArray
    * @param targetFile
    * @throws IOException

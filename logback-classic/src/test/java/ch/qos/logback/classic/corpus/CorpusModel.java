@@ -23,15 +23,17 @@ import ch.qos.logback.classic.spi.LoggerContextVO;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyVO;
+import org.slf4j.message.Message;
+import org.slf4j.message.SimpleMessage;
 
 /**
  * Models the corpus.
- * 
+ *
  * <p>This contains the probability distributions of levels, logger names,
  * messages, message arguments.
- * 
+ *
  * @author Ceki G&uuml;lc&uuml;
- * 
+ *
  */
 public class CorpusModel {
 
@@ -211,7 +213,7 @@ public class CorpusModel {
     return argumentArray;
   }
 
-  private MessageArgumentTuple makeRandomMessageArgumentTuple() {
+  private Message makeRandomMessage() {
     int numOfArguments = getNumberOfMessageArguments();
 
     int wordCount = RandomUtil.gaussianAsPositiveInt(random,
@@ -229,11 +231,11 @@ public class CorpusModel {
       sb.append(wordArray[i]).append(' ');
     }
     sb.append(getRandomWord());
-    return new MessageArgumentTuple(sb.toString(), numOfArguments);
+    return new SimpleMessage(sb.toString());
   }
 
   private LogStatement makeRandomLogStatement(String[] loggerNamePool) {
-    MessageArgumentTuple mat = makeRandomMessageArgumentTuple();
+    Message msg = makeRandomMessage();
     String loggerName = getRandomLoggerNameFromPool(loggerNamePool);
     Level randomLevel = getRandomLevel();
     Throwable t = getRandomThrowable(randomLevel);
@@ -242,7 +244,7 @@ public class CorpusModel {
       throwableProxy = ThrowableProxyVO.build(new ThrowableProxy(t));
       pupulateWithPackagingData(throwableProxy.getStackTraceElementProxyArray());
     }
-    LogStatement logStatement = new LogStatement(loggerName, randomLevel, mat,
+    LogStatement logStatement = new LogStatement(loggerName, randomLevel, msg,
         throwableProxy);
     return logStatement;
   }

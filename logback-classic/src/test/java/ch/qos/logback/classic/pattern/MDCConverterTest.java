@@ -26,6 +26,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.util.SystemInfo;
+import org.slf4j.message.SimpleMessage;
 
 public class MDCConverterTest {
 
@@ -71,8 +72,7 @@ public class MDCConverterTest {
 
   private ILoggingEvent createLoggingEvent() {
     ILoggingEvent le = new LoggingEvent(this.getClass().getName(), lc
-        .getLogger(Logger.ROOT_LOGGER_NAME), Level.DEBUG, "test message", null,
-        null);
+        .getLogger(Logger.ROOT_LOGGER_NAME), Level.DEBUG, new SimpleMessage("test message"), null);
     return le;
   }
 }

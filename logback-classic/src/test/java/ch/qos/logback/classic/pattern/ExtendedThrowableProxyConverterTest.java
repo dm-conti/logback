@@ -31,6 +31,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import org.slf4j.message.SimpleMessage;
 
 public class ExtendedThrowableProxyConverterTest {
 
@@ -51,8 +52,7 @@ public class ExtendedThrowableProxyConverterTest {
 
   private ILoggingEvent createLoggingEvent(Throwable t) {
     ILoggingEvent le = new LoggingEvent(this.getClass().getName(), lc
-        .getLogger(Logger.ROOT_LOGGER_NAME), Level.DEBUG, "test message", t,
-        null);
+        .getLogger(Logger.ROOT_LOGGER_NAME), Level.DEBUG, new SimpleMessage("test message"), t);
     return le;
   }
 

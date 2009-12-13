@@ -53,6 +53,9 @@ public class IETFSyslogWriter extends SyslogWriter {
         isUDP = true;
         break;
       case TCP:
+        handler = new TCPIOHandler(true);
+        break;
+      case TCP_WITH_LENGTH:
         handler = new TCPIOHandler();
         break;
       default:
@@ -112,6 +115,7 @@ public class IETFSyslogWriter extends SyslogWriter {
   private class TCPIOHandler implements IOHandler {
     private Connector connector;
     protected OutputStreamWriter osw;
+    private boolean useNewline;
 
     protected int counter = 0;
 
@@ -119,13 +123,22 @@ public class IETFSyslogWriter extends SyslogWriter {
       connect();
     }
 
+    public TCPIOHandler(boolean useNewline) {
+      this();
+      this.useNewline = useNewline;
+    }
+
     public void flush() throws IOException {
       if (osw != null) {
         StringBuilder sb = new StringBuilder();
-        /**sb.append(Integer.toString(buf.length()));
-        sb.append(" ");*/
+        if (!useNewline) {
+          sb.append(Integer.toString(buf.length()));
+          sb.append(" ");
+        }
         sb.append(buf.toString());
-        sb.append("\n");
+        if (useNewline) {
+          sb.append("\n");
+        }
         try {
           osw.write(sb.toString());
           // addInfo("=========Flushing.");

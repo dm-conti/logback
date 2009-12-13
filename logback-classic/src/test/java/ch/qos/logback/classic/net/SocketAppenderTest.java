@@ -74,7 +74,7 @@ public class SocketAppenderTest {
 
     ILoggingEvent remoteEvent = la.list.get(0);
     assertNull(remoteEvent.getCallerData());
-    assertEquals("test msg", remoteEvent.getMessage());
+    assertEquals("test msg", remoteEvent.getMessage().getMessageFormat());
     assertEquals(Level.DEBUG, remoteEvent.getLevel());
   }
 
@@ -153,7 +153,7 @@ public class SocketAppenderTest {
     ILoggingEvent remoteEvent = la.list.get(0);
     assertNotNull(remoteEvent.getCallerData());
   }
-  
+
   @Test
   public void messageWithMarker() throws InterruptedException {
     fireServer();
@@ -229,7 +229,7 @@ public class SocketAppenderTest {
     assertEquals(1, la.list.size());
 
     ILoggingEvent remoteEvent = la.list.get(0);
-    assertEquals("test msg 2", remoteEvent.getMessage());
+    assertEquals("test msg 2", remoteEvent.getMessage().getMessageFormat());
     assertEquals(Level.DEBUG, remoteEvent.getLevel());
   }
 

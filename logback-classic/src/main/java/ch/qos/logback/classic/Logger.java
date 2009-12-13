@@ -22,9 +22,11 @@ import java.util.List;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
-import org.slf4j.StructuredData;
+import org.slf4j.message.Message;
+import org.slf4j.message.MessageLogger;
+import org.slf4j.message.ParameterizedMessage;
+import org.slf4j.message.SimpleMessage;
 import org.slf4j.spi.LocationAwareLogger;
-import org.slf4j.spi.XLocationAwareLogger;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggerRemoteView;
@@ -35,7 +37,7 @@ import ch.qos.logback.core.spi.AppenderAttachable;
 import ch.qos.logback.core.spi.AppenderAttachableImpl;
 import ch.qos.logback.core.spi.FilterReply;
 
-public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
+public final class Logger implements org.slf4j.Logger, MessageLogger,
     AppenderAttachable<ILoggingEvent>, Serializable {
 
   /**
@@ -402,13 +404,10 @@ public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
    * logging by about 20 nanoseconds.
    */
 
-  private final void filterAndLog_0_Or3Plus(final String localFQCN,
-      final Marker marker, final Level level, final String msg,
-      final Object[] params, final Throwable t) {
-
+  private final void filterAndLog(final String localFQCN, final Marker marker,
+      final Level level, final Message msg, final Throwable t) {
     final FilterReply decision = loggerContext
-        .getTurboFilterChainDecision_0_3OrMore(marker, this, level, msg,
-            params, t);
+        .getTurboFilterChainDecision(marker, this, level, msg, t);
 
     if (decision == FilterReply.NEUTRAL) {
       if (effectiveLevelInt > level.levelInt) {
@@ -418,15 +417,13 @@ public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
       return;
     }
 
-    buildLoggingEventAndAppend(localFQCN, marker, level, msg, params, t);
+    buildLoggingEventAndAppend(localFQCN, marker, level, msg, t);
   }
 
-  private final void filterAndLog_1(final String localFQCN,
-      final Marker marker, final Level level, final String msg,
-      final Object param, final Throwable t) {
-
-    final FilterReply decision = loggerContext.getTurboFilterChainDecision_1(
-        marker, this, level, msg, param, t);
+  private final void filterAndLog(final String localFQCN, final Marker marker,
+      final Level level, String format, Object[] args, final Throwable t) {
+    final FilterReply decision = loggerContext
+        .getTurboFilterChainDecision(marker, this, level, format, args, t);
 
     if (decision == FilterReply.NEUTRAL) {
       if (effectiveLevelInt > level.levelInt) {
@@ -436,16 +433,13 @@ public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
       return;
     }
 
-    buildLoggingEventAndAppend(localFQCN, marker, level, msg,
-        new Object[] { param }, t);
+    buildLoggingEventAndAppend(localFQCN, marker, level, new ParameterizedMessage(format, args), t);
   }
 
-  private final void filterAndLog_2(final String localFQCN,
-      final Marker marker, final Level level, final String msg,
-      final Object param1, final Object param2, final Throwable t) {
-
-    final FilterReply decision = loggerContext.getTurboFilterChainDecision_2(
-        marker, this, level, msg, param1, param2, t);
+  private final void filterAndLog(final String localFQCN, final Marker marker,
+      final Level level, String format, Object arg, final Throwable t) {
+    final FilterReply decision = loggerContext
+        .getTurboFilterChainDecision(marker, this, level, format, arg, t);
 
     if (decision == FilterReply.NEUTRAL) {
       if (effectiveLevelInt > level.levelInt) {
@@ -455,210 +449,31 @@ public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
       return;
     }
 
-    buildLoggingEventAndAppend(localFQCN, marker, level, msg, new Object[] {
-        param1, param2 }, t);
+    buildLoggingEventAndAppend(localFQCN, marker, level, new ParameterizedMessage(format, arg), t);
   }
 
-  private void buildLoggingEventAndAppend(final String localFQCN,
-      final Marker marker, final Level level, final String msg,
-      final Object[] params, final Throwable t) {
-    LoggingEvent le = new LoggingEvent(localFQCN, this, level, msg, t, params);
+  private final void filterAndLog(final String localFQCN, final Marker marker,
+      final Level level, String format, Object arg1, Object arg2, final Throwable t) {
+    final FilterReply decision = loggerContext
+        .getTurboFilterChainDecision(marker, this, level, format, arg1, arg2, t);
+
+    if (decision == FilterReply.NEUTRAL) {
+      if (effectiveLevelInt > level.levelInt) {
+        return;
+      }
+    } else if (decision == FilterReply.DENY) {
+      return;
+    }
+
+    buildLoggingEventAndAppend(localFQCN, marker, level, new ParameterizedMessage(format, arg1, arg2), t);
+  }
+
+
+  private void buildLoggingEventAndAppend(final String localFQCN, final Marker marker,
+      final Level level, final Message msg, final Throwable t) {
+    LoggingEvent le = new LoggingEvent(localFQCN, this, level, msg, t);
     le.setMarker(marker);
     callAppenders(le);
-  }
-
-  public void trace(String msg) {
-    filterAndLog_0_Or3Plus(FQCN, null, Level.TRACE, msg, null, null);
-  }
-
-  public final void trace(String format, Object arg) {
-    filterAndLog_1(FQCN, null, Level.TRACE, format, arg, null);
-  }
-
-  public void trace(String format, Object arg1, Object arg2) {
-    filterAndLog_2(FQCN, null, Level.TRACE, format, arg1, arg2, null);
-  }
-
-  public void trace(String format, Object[] argArray) {
-    filterAndLog_0_Or3Plus(FQCN, null, Level.TRACE, format, argArray, null);
-  }
-
-  public void trace(String msg, Throwable t) {
-    filterAndLog_0_Or3Plus(FQCN, null, Level.TRACE, msg, null, t);
-  }
-
-  public final void trace(Marker marker, String msg) {
-    filterAndLog_0_Or3Plus(FQCN, marker, Level.TRACE, msg, null, null);
-  }
-
-  public void trace(Marker marker, String format, Object arg) {
-    filterAndLog_1(FQCN, marker, Level.TRACE, format, arg, null);
-  }
-
-  public void trace(Marker marker, String format, Object arg1, Object arg2) {
-    filterAndLog_2(FQCN, marker, Level.TRACE, format, arg1, arg2, null);
-  }
-
-  public void trace(Marker marker, String format, Object[] argArray) {
-    filterAndLog_0_Or3Plus(FQCN, marker, Level.TRACE, format, argArray, null);
-  }
-
-  public void trace(Marker marker, String msg, Throwable t) {
-    filterAndLog_0_Or3Plus(FQCN, marker, Level.TRACE, msg, null, t);
-  }
-
-  final public boolean isDebugEnabled() {
-    return isDebugEnabled(null);
-  }
-
-  final public boolean isDebugEnabled(Marker marker) {
-    final FilterReply decision = callTurboFilters(marker, Level.DEBUG);
-    if (decision == FilterReply.NEUTRAL) {
-      return effectiveLevelInt <= Level.DEBUG_INT;
-    } else if (decision == FilterReply.DENY) {
-      return false;
-    } else if (decision == FilterReply.ACCEPT) {
-      return true;
-    } else {
-      throw new IllegalStateException("Unknown FilterReply value: " + decision);
-    }
-  }
-
-  final public void debug(String msg) {
-    filterAndLog_0_Or3Plus(FQCN, null, Level.DEBUG, msg, null, null);
-  }
-
-  final public void debug(String format, Object arg) {
-    filterAndLog_1(FQCN, null, Level.DEBUG, format, arg, null);
-  }
-
-  final public void debug(String format, Object arg1, Object arg2) {
-    filterAndLog_2(FQCN, null, Level.DEBUG, format, arg1, arg2, null);
-  }
-
-  final public void debug(String format, Object[] argArray) {
-    filterAndLog_0_Or3Plus(FQCN, null, Level.DEBUG, format, argArray, null);
-  }
-
-  public void debug(String msg, Throwable t) {
-    filterAndLog_0_Or3Plus(FQCN, null, Level.DEBUG, msg, null, t);
-  }
-
-  public final void debug(Marker marker, String msg) {
-    filterAndLog_0_Or3Plus(FQCN, marker, Level.DEBUG, msg, null, null);
-  }
-
-  public void debug(Marker marker, String format, Object arg) {
-    filterAndLog_1(FQCN, marker, Level.DEBUG, format, arg, null);
-  }
-
-  public void debug(Marker marker, String format, Object arg1, Object arg2) {
-    filterAndLog_2(FQCN, marker, Level.DEBUG, format, arg1, arg2, null);
-  }
-
-  public void debug(Marker marker, String format, Object[] argArray) {
-    filterAndLog_0_Or3Plus(FQCN, marker, Level.DEBUG, format, argArray, null);
-  }
-
-  public void debug(Marker marker, String msg, Throwable t) {
-    filterAndLog_0_Or3Plus(FQCN, marker, Level.DEBUG, msg, null, t);
-  }
-
-  public void error(String msg) {
-    filterAndLog_0_Or3Plus(FQCN, null, Level.ERROR, msg, null, null);
-  }
-
-  public void error(String format, Object arg) {
-    filterAndLog_1(FQCN, null, Level.ERROR, format, arg, null);
-  }
-
-  public void error(String format, Object arg1, Object arg2) {
-    filterAndLog_2(FQCN, null, Level.ERROR, format, arg1, arg2, null);
-  }
-
-  public void error(String format, Object[] argArray) {
-    filterAndLog_0_Or3Plus(FQCN, null, Level.ERROR, format, argArray, null);
-  }
-
-  public void error(String msg, Throwable t) {
-    filterAndLog_0_Or3Plus(FQCN, null, Level.ERROR, msg, null, t);
-  }
-
-  public void error(Marker marker, String msg) {
-    filterAndLog_0_Or3Plus(FQCN, marker, Level.ERROR, msg, null, null);
-  }
-
-  public void error(Marker marker, String format, Object arg) {
-    filterAndLog_1(FQCN, marker, Level.ERROR, format, arg, null);
-  }
-
-  public void error(Marker marker, String format, Object arg1, Object arg2) {
-    filterAndLog_2(FQCN, marker, Level.ERROR, format, arg1, arg2, null);
-  }
-
-  public void error(Marker marker, String format, Object[] argArray) {
-    filterAndLog_0_Or3Plus(FQCN, marker, Level.ERROR, format, argArray, null);
-  }
-
-  public void error(Marker marker, String msg, Throwable t) {
-    filterAndLog_0_Or3Plus(FQCN, marker, Level.ERROR, msg, null, t);
-  }
-
-  public boolean isInfoEnabled() {
-    return isInfoEnabled(null);
-  }
-
-  public boolean isInfoEnabled(Marker marker) {
-    FilterReply decision = callTurboFilters(marker, Level.INFO);
-    if (decision == FilterReply.NEUTRAL) {
-      return effectiveLevelInt <= Level.INFO_INT;
-    } else if (decision == FilterReply.DENY) {
-      return false;
-    } else if (decision == FilterReply.ACCEPT) {
-      return true;
-    } else {
-      throw new IllegalStateException("Unknown FilterReply value: " + decision);
-    }
-  }
-
-  public void info(String msg) {
-    filterAndLog_0_Or3Plus(FQCN, null, Level.INFO, msg, null, null);
-  }
-
-  public void info(String format, Object arg) {
-    filterAndLog_1(FQCN, null, Level.INFO, format, arg, null);
-  }
-
-  public void info(String format, Object arg1, Object arg2) {
-    filterAndLog_2(FQCN, null, Level.INFO, format, arg1, arg2, null);
-  }
-
-  public void info(String format, Object[] argArray) {
-    filterAndLog_0_Or3Plus(FQCN, null, Level.INFO, format, argArray, null);
-  }
-
-  public void info(String msg, Throwable t) {
-    filterAndLog_0_Or3Plus(FQCN, null, Level.INFO, msg, null, t);
-  }
-
-  public void info(Marker marker, String msg) {
-    filterAndLog_0_Or3Plus(FQCN, marker, Level.INFO, msg, null, null);
-  }
-
-  public void info(Marker marker, String format, Object arg) {
-    filterAndLog_1(FQCN, marker, Level.INFO, format, arg, null);
-  }
-
-  public void info(Marker marker, String format, Object arg1, Object arg2) {
-    filterAndLog_2(FQCN, marker, Level.INFO, format, arg1, arg2, null);
-  }
-
-  public void info(Marker marker, String format, Object[] argArray) {
-    filterAndLog_0_Or3Plus(FQCN, marker, Level.INFO, format, argArray, null);
-  }
-
-  public void info(Marker marker, String msg, Throwable t) {
-    filterAndLog_0_Or3Plus(FQCN, marker, Level.INFO, msg, null, t);
   }
 
   public final boolean isTraceEnabled() {
@@ -678,6 +493,135 @@ public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
     }
   }
 
+  public void trace(Message msg) {
+    filterAndLog(FQCN, null, Level.TRACE, msg, null);
+  }
+
+  public void trace(Message msg, Throwable t) {
+    filterAndLog(FQCN, null, Level.TRACE, msg, t);
+  }
+
+  public void trace(Marker marker, Message msg) {
+    filterAndLog(FQCN, marker, Level.TRACE, msg, null);
+  }
+
+  public void trace(Marker marker, Message msg, Throwable t) {
+    filterAndLog(FQCN, marker, Level.TRACE, msg, t);
+  }
+
+  public void trace(String msg) {
+    filterAndLog(FQCN, null, Level.TRACE, msg, null, null);
+  }
+
+  public final void trace(String format, Object arg) {
+    filterAndLog(FQCN, null, Level.TRACE, format, arg, null);
+  }
+
+  public void trace(String format, Object arg1, Object arg2) {
+    filterAndLog(FQCN, null, Level.TRACE, format, arg1, arg2, null);
+  }
+
+  public void trace(String format, Object[] argArray) {
+    filterAndLog(FQCN, null, Level.TRACE, format, argArray, null);
+  }
+
+  public void trace(String msg, Throwable t) {
+    filterAndLog(FQCN, null, Level.TRACE, msg, null, t);
+  }
+
+  public final void trace(Marker marker, String msg) {
+    filterAndLog(FQCN, marker, Level.TRACE, msg, null, null);
+  }
+
+  public void trace(Marker marker, String format, Object arg) {
+    filterAndLog(FQCN, marker, Level.TRACE, format, arg, null);
+  }
+
+  public void trace(Marker marker, String format, Object arg1, Object arg2) {
+    filterAndLog(FQCN, marker, Level.TRACE, format, arg1, arg2, null);
+  }
+
+  public void trace(Marker marker, String format, Object[] argArray) {
+    filterAndLog(FQCN, marker, Level.TRACE, format, argArray, null);
+  }
+
+  public void trace(Marker marker, String msg, Throwable t) {
+    filterAndLog(FQCN, marker, Level.TRACE, msg, null, t);
+  }
+
+  final public boolean isDebugEnabled() {
+    return isDebugEnabled(null);
+  }
+
+  final public boolean isDebugEnabled(Marker marker) {
+    final FilterReply decision = callTurboFilters(marker, Level.DEBUG);
+    if (decision == FilterReply.NEUTRAL) {
+      return effectiveLevelInt <= Level.DEBUG_INT;
+    } else if (decision == FilterReply.DENY) {
+      return false;
+    } else if (decision == FilterReply.ACCEPT) {
+      return true;
+    } else {
+      throw new IllegalStateException("Unknown FilterReply value: " + decision);
+    }
+  }
+
+  public void debug(Message msg) {
+    filterAndLog(FQCN, null, Level.DEBUG, msg, null);
+  }
+
+  public void debug(Message msg, Throwable t) {
+    filterAndLog(FQCN, null, Level.DEBUG, msg, t);
+  }
+
+  public void debug(Marker marker, Message msg) {
+    filterAndLog(FQCN, marker, Level.DEBUG, msg, null);
+  }
+
+  public void debug(Marker marker, Message msg, Throwable t) {
+    filterAndLog(FQCN, marker, Level.DEBUG, msg, t);
+  }
+
+  public void debug(String msg) {
+    filterAndLog(FQCN, null, Level.DEBUG, msg, null, null);
+  }
+
+  public final void debug(String format, Object arg) {
+    filterAndLog(FQCN, null, Level.DEBUG, format, arg, null);
+  }
+
+  public void debug(String format, Object arg1, Object arg2) {
+    filterAndLog(FQCN, null, Level.DEBUG, format, arg1, arg2, null);
+  }
+
+  public void debug(String format, Object[] argArray) {
+    filterAndLog(FQCN, null, Level.DEBUG, format, argArray, null);
+  }
+
+  public void debug(String msg, Throwable t) {
+    filterAndLog(FQCN, null, Level.DEBUG, msg, null, t);
+  }
+
+  public final void debug(Marker marker, String msg) {
+    filterAndLog(FQCN, marker, Level.DEBUG, msg, null, null);
+  }
+
+  public void debug(Marker marker, String format, Object arg) {
+    filterAndLog(FQCN, marker, Level.DEBUG, format, arg, null);
+  }
+
+  public void debug(Marker marker, String format, Object arg1, Object arg2) {
+    filterAndLog(FQCN, marker, Level.DEBUG, format, arg1, arg2, null);
+  }
+
+  public void debug(Marker marker, String format, Object[] argArray) {
+    filterAndLog(FQCN, marker, Level.DEBUG, format, argArray, null);
+  }
+
+  public void debug(Marker marker, String msg, Throwable t) {
+    filterAndLog(FQCN, marker, Level.DEBUG, msg, null, t);
+  }
+
   public final boolean isErrorEnabled() {
     return isErrorEnabled(null);
   }
@@ -693,6 +637,135 @@ public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
     } else {
       throw new IllegalStateException("Unknown FilterReply value: " + decision);
     }
+  }
+
+  public void error(Message msg) {
+    filterAndLog(FQCN, null, Level.ERROR, msg, null);
+  }
+
+  public void error(Message msg, Throwable t) {
+    filterAndLog(FQCN, null, Level.ERROR, msg, t);
+  }
+
+  public void error(Marker marker, Message msg) {
+    filterAndLog(FQCN, marker, Level.ERROR, msg, null);
+  }
+
+  public void error(Marker marker, Message msg, Throwable t) {
+    filterAndLog(FQCN, marker, Level.ERROR, msg, t);
+  }
+
+  public void error(String msg) {
+    filterAndLog(FQCN, null, Level.ERROR, msg, null, null);
+  }
+
+  public final void error(String format, Object arg) {
+    filterAndLog(FQCN, null, Level.ERROR, format, arg, null);
+  }
+
+  public void error(String format, Object arg1, Object arg2) {
+    filterAndLog(FQCN, null, Level.ERROR, format, arg1, arg2, null);
+  }
+
+  public void error(String format, Object[] argArray) {
+    filterAndLog(FQCN, null, Level.ERROR, format, argArray, null);
+  }
+
+  public void error(String msg, Throwable t) {
+    filterAndLog(FQCN, null, Level.ERROR, msg, null, t);
+  }
+
+  public final void error(Marker marker, String msg) {
+    filterAndLog(FQCN, marker, Level.ERROR, msg, null, null);
+  }
+
+  public void error(Marker marker, String format, Object arg) {
+    filterAndLog(FQCN, marker, Level.ERROR, format, arg, null);
+  }
+
+  public void error(Marker marker, String format, Object arg1, Object arg2) {
+    filterAndLog(FQCN, marker, Level.ERROR, format, arg1, arg2, null);
+  }
+
+  public void error(Marker marker, String format, Object[] argArray) {
+    filterAndLog(FQCN, marker, Level.ERROR, format, argArray, null);
+  }
+
+  public void error(Marker marker, String msg, Throwable t) {
+    filterAndLog(FQCN, marker, Level.ERROR, msg, null, t);
+  }
+
+  public boolean isInfoEnabled() {
+    return isInfoEnabled(null);
+  }
+
+  public boolean isInfoEnabled(Marker marker) {
+    FilterReply decision = callTurboFilters(marker, Level.INFO);
+    if (decision == FilterReply.NEUTRAL) {
+      return effectiveLevelInt <= Level.INFO_INT;
+    } else if (decision == FilterReply.DENY) {
+      return false;
+    } else if (decision == FilterReply.ACCEPT) {
+      return true;
+    } else {
+      throw new IllegalStateException("Unknown FilterReply value: " + decision);
+    }
+  }
+
+  public void info(Message msg) {
+    filterAndLog(FQCN, null, Level.INFO, msg, null);
+  }
+
+  public void info(Message msg, Throwable t) {
+    filterAndLog(FQCN, null, Level.INFO, msg, t);
+  }
+
+  public void info(Marker marker, Message msg) {
+    filterAndLog(FQCN, marker, Level.INFO, msg, null);
+  }
+
+  public void info(Marker marker, Message msg, Throwable t) {
+    filterAndLog(FQCN, marker, Level.INFO, msg, t);
+  }
+
+  public void info(String msg) {
+    filterAndLog(FQCN, null, Level.INFO, msg, null, null);
+  }
+
+  public final void info(String format, Object arg) {
+    filterAndLog(FQCN, null, Level.INFO, format, arg, null);
+  }
+
+  public void info(String format, Object arg1, Object arg2) {
+    filterAndLog(FQCN, null, Level.INFO, format, arg1, arg2, null);
+  }
+
+  public void info(String format, Object[] argArray) {
+    filterAndLog(FQCN, null, Level.INFO, format, argArray, null);
+  }
+
+  public void info(String msg, Throwable t) {
+    filterAndLog(FQCN, null, Level.INFO, msg, null, t);
+  }
+
+  public final void info(Marker marker, String msg) {
+    filterAndLog(FQCN, marker, Level.INFO, msg, null, null);
+  }
+
+  public void info(Marker marker, String format, Object arg) {
+    filterAndLog(FQCN, marker, Level.INFO, format, arg, null);
+  }
+
+  public void info(Marker marker, String format, Object arg1, Object arg2) {
+    filterAndLog(FQCN, marker, Level.INFO, format, arg1, arg2, null);
+  }
+
+  public void info(Marker marker, String format, Object[] argArray) {
+    filterAndLog(FQCN, marker, Level.INFO, format, argArray, null);
+  }
+
+  public void info(Marker marker, String msg, Throwable t) {
+    filterAndLog(FQCN, marker, Level.INFO, msg, null, t);
   }
 
   public boolean isWarnEnabled() {
@@ -713,6 +786,61 @@ public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
 
   }
 
+  public void warn(Message msg) {
+    filterAndLog(FQCN, null, Level.WARN, msg, null);
+  }
+
+  public void warn(Message msg, Throwable t) {
+    filterAndLog(FQCN, null, Level.WARN, msg, t);
+  }
+
+  public void warn(Marker marker, Message msg) {
+    filterAndLog(FQCN, marker, Level.WARN, msg, null);
+  }
+
+  public void warn(Marker marker, Message msg, Throwable t) {
+    filterAndLog(FQCN, marker, Level.WARN, msg, t);
+  }
+
+  public void warn(String msg) {
+    filterAndLog(FQCN, null, Level.WARN, msg, null, null);
+  }
+
+  public final void warn(String format, Object arg) {
+    filterAndLog(FQCN, null, Level.WARN, format, arg, null);
+  }
+
+  public void warn(String format, Object arg1, Object arg2) {
+    filterAndLog(FQCN, null, Level.WARN, format, arg1, arg2, null);
+  }
+
+  public void warn(String format, Object[] argArray) {
+    filterAndLog(FQCN, null, Level.WARN, format, argArray, null);
+  }
+
+  public void warn(String msg, Throwable t) {
+    filterAndLog(FQCN, null, Level.WARN, msg, null, t);
+  }
+
+  public final void warn(Marker marker, String msg) {
+    filterAndLog(FQCN, marker, Level.WARN, msg, null, null);
+  }
+
+  public void warn(Marker marker, String format, Object arg) {
+    filterAndLog(FQCN, marker, Level.WARN, format, arg, null);
+  }
+
+  public void warn(Marker marker, String format, Object arg1, Object arg2) {
+    filterAndLog(FQCN, marker, Level.WARN, format, arg1, arg2, null);
+  }
+
+  public void warn(Marker marker, String format, Object[] argArray) {
+    filterAndLog(FQCN, marker, Level.WARN, format, argArray, null);
+  }
+
+  public void warn(Marker marker, String msg, Throwable t) {
+    filterAndLog(FQCN, marker, Level.WARN, msg, null, t);
+  }
   public boolean isEnabledFor(Marker marker, Level level) {
     FilterReply decision = callTurboFilters(marker, level);
     if (decision == FilterReply.NEUTRAL) {
@@ -728,46 +856,6 @@ public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
 
   public boolean isEnabledFor(Level level) {
     return isEnabledFor(null, level);
-  }
-
-  public void warn(String msg) {
-    filterAndLog_0_Or3Plus(FQCN, null, Level.WARN, msg, null, null);
-  }
-
-  public void warn(String msg, Throwable t) {
-    filterAndLog_0_Or3Plus(FQCN, null, Level.WARN, msg, null, t);
-  }
-
-  public void warn(String format, Object arg) {
-    filterAndLog_1(FQCN, null, Level.WARN, format, arg, null);
-  }
-
-  public void warn(String format, Object arg1, Object arg2) {
-    filterAndLog_2(FQCN, null, Level.WARN, format, arg1, arg2, null);
-  }
-
-  public void warn(String format, Object[] argArray) {
-    filterAndLog_0_Or3Plus(FQCN, null, Level.WARN, format, argArray, null);
-  }
-
-  public void warn(Marker marker, String msg) {
-    filterAndLog_0_Or3Plus(FQCN, marker, Level.WARN, msg, null, null);
-  }
-
-  public void warn(Marker marker, String format, Object arg) {
-    filterAndLog_1(FQCN, marker, Level.WARN, format, arg, null);
-  }
-
-  public void warn(Marker marker, String format, Object[] argArray) {
-    filterAndLog_0_Or3Plus(FQCN, marker, Level.WARN, format, argArray, null);
-  }
-
-  public void warn(Marker marker, String format, Object arg1, Object arg2) {
-    filterAndLog_2(FQCN, marker, Level.WARN, format, arg1, arg2, null);
-  }
-
-  public void warn(Marker marker, String msg, Throwable t) {
-    filterAndLog_0_Or3Plus(FQCN, marker, Level.WARN, msg, null, t);
   }
 
   public boolean isAdditive() {
@@ -794,8 +882,8 @@ public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
    * @return the reply given by the TurboFilters
    */
   private FilterReply callTurboFilters(Marker marker, Level level) {
-    return loggerContext.getTurboFilterChainDecision_0_3OrMore(marker, this,
-        level, null, null, null);
+    return loggerContext.getTurboFilterChainDecision(marker, this,
+        level, null, null);
   }
 
   /**
@@ -818,7 +906,7 @@ public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
   public void log(Marker marker, String fqcn, int levelInt, String message,
       Throwable t) {
     Level level = getLevel(levelInt);
-    filterAndLog_0_Or3Plus(fqcn, marker, level, message, null, t);
+    filterAndLog(fqcn, marker, level, new SimpleMessage(message), t);
   }
 
   /**
@@ -833,23 +921,20 @@ public final class Logger implements org.slf4j.Logger, XLocationAwareLogger,
    */
   public void log(Marker marker, String fqcn, int levelInt, String message, Object[] argArray, Throwable t) {
     Level level = getLevel(levelInt);
-    filterAndLog_0_Or3Plus(fqcn, marker, level, message, argArray, t);
+    filterAndLog(fqcn, marker, level, new ParameterizedMessage(message, argArray), t);
   }
 
-
   /**
-   * Logs Structured Data. If the underlying logging implementation does not support structured data then
-   * the format string will be used as advice on how to format the structured data.
+   * Logs Messages.
    * @param marker The Marker
    * @param fqcn The fully qualified class name of the <b>caller</b>
    * @param levelInt The logging level
-   * @param data The StructuredData.
-   * @param format The format style or null to use the default.
+   * @param msg The Message.
    * @param t A Throwable or null.
    */
-  public void log(Marker marker, String fqcn, int levelInt, StructuredData data, String format, Throwable t) {
+  public void log(Marker marker, String fqcn, int levelInt, Message msg, Throwable t) {
     Level level = getLevel(levelInt);
-    filterAndLog_1(fqcn, marker, level, null, data, t);
+    filterAndLog(fqcn, marker, level, msg, t);
   }
 
   private Level getLevel(int levelInt) {

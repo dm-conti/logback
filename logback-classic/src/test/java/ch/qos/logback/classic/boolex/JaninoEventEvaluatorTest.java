@@ -34,6 +34,7 @@ import ch.qos.logback.core.boolex.JaninoEventEvaluatorBase;
 import ch.qos.logback.core.boolex.Matcher;
 import ch.qos.logback.core.filter.EvaluatorFilter;
 import ch.qos.logback.core.spi.FilterReply;
+import org.slf4j.message.SimpleMessage;
 
 public class JaninoEventEvaluatorTest {
 
@@ -56,7 +57,7 @@ public class JaninoEventEvaluatorTest {
   LoggingEvent makeLoggingEvent(Exception ex) {
     LoggingEvent e = new LoggingEvent(
         ch.qos.logback.core.pattern.FormattingConverter.class.getName(),
-        logger, Level.INFO, "Some message", ex, null);
+        logger, Level.INFO, new SimpleMessage("Some message"), ex);
     return e;
   }
 
@@ -138,7 +139,7 @@ public class JaninoEventEvaluatorTest {
     ef.start();
     ILoggingEvent event = makeLoggingEvent(null);
     assertEquals(FilterReply.NEUTRAL, ef.decide(event));
-    
+
   }
 
   @Test
@@ -155,7 +156,7 @@ public class JaninoEventEvaluatorTest {
 
   /**
    * check that evaluator with bogus exp does not start
-   * 
+   *
    * @throws Exception
    */
   @Test

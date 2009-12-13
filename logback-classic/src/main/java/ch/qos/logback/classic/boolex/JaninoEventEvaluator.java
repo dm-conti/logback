@@ -115,7 +115,7 @@ public class JaninoEventEvaluator extends
     values[i++] = Level.ERROR_INTEGER;
 
     values[i++] = loggingEvent;
-    values[i++] = loggingEvent.getMessage();
+    values[i++] = loggingEvent.getMessage().getMessageFormat();
     values[i++] = loggingEvent.getFormattedMessage();
     values[i++] = loggingEvent.getLoggerName();
     values[i++] = loggingEvent.getLoggerContextVO();

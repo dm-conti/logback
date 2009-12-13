@@ -28,6 +28,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.message.SimpleMessage;
 import org.xml.sax.EntityResolver;
 
 import ch.qos.logback.classic.Level;
@@ -112,10 +113,10 @@ public class HTMLLayoutTest {
     DummyThrowableProxy tp = new DummyThrowableProxy();
     tp.setClassName("test1");
     tp.setMessage("msg1");
-    
+
     StackTraceElement ste1 = new StackTraceElement("c1", "m1", "f1", 1);
     StackTraceElement ste2 = new StackTraceElement("c2", "m2", "f2", 2);
-    
+
     StackTraceElementProxy[] stepArray = { new StackTraceElementProxy(ste1),
         new StackTraceElementProxy(ste2) };
     tp.setStackTraceElementProxyArray(stepArray);
@@ -210,7 +211,7 @@ public class HTMLLayoutTest {
     sb.append(layout.getPresentationHeader());
     for (int i = 0; i < CoreConstants.TABLE_ROW_LIMIT * 3; i++) {
       sb.append(layout.doLayout(new LoggingEvent(this.getClass().getName(),
-          root, Level.DEBUG, "test message" + i, null, null)));
+          root, Level.DEBUG, new SimpleMessage("test message" + i), null)));
     }
     sb.append(layout.getPresentationFooter());
     sb.append(layout.getFileFooter());
@@ -220,7 +221,7 @@ public class HTMLLayoutTest {
 
   private LoggingEvent createLoggingEvent() {
     LoggingEvent le = new LoggingEvent(this.getClass().getName(), root,
-        Level.DEBUG, "test message", null, null);
+        Level.DEBUG, new SimpleMessage("test message"), null);
     return le;
   }
 
@@ -242,7 +243,7 @@ public class HTMLLayoutTest {
   public void testConversionRuleSupportInHtmlLayout() throws JoranException {
     configure(TeztConstants.TEST_DIR_PREFIX
         + "input/joran/conversionRule/htmlLayout0.xml");
-   
+
     root.getAppender("LIST");
     String msg = "Simon says";
     root.debug(msg);

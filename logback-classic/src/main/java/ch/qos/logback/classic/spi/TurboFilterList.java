@@ -21,10 +21,11 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.turbo.TurboFilter;
 import ch.qos.logback.core.spi.FilterReply;
+import org.slf4j.message.Message;
 
 /**
  * Implementation of TurboFilterAttachable.
- * 
+ *
  * @author Ceki G&uuml;lc&uuml;
  */
 final public class TurboFilterList extends CopyOnWriteArrayList<TurboFilter> {
@@ -39,8 +40,8 @@ final public class TurboFilterList extends CopyOnWriteArrayList<TurboFilter> {
   public final FilterReply getTurboFilterChainDecision(final Marker marker,
       final Logger logger, final Level level, final String format,
       final Object[] params, final Throwable t) {
-    
-    
+
+
     final int size = size();
 //    if (size == 0) {
 //      return FilterReply.NEUTRAL;
@@ -53,7 +54,7 @@ final public class TurboFilterList extends CopyOnWriteArrayList<TurboFilter> {
         return FilterReply.NEUTRAL;
       }
     }
-    
+
     Object[] tfa = toArray();
     final int len = tfa.length;
     for (int i = 0; i < len; i++) {

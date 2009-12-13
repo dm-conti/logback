@@ -17,6 +17,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import org.slf4j.message.SimpleMessage;
 
 public class TrivialLoggingEventBuilder implements Builder {
 
@@ -29,8 +30,8 @@ public class TrivialLoggingEventBuilder implements Builder {
     le.setLevel(Level.DEBUG);
     le.setLoggerName(logger.getName());
     le.setLoggerContextRemoteView(logger.getLoggerRemoteView().getLoggerContextView());
-    le.setMessage(MSG_PREFIX);
+    le.setMessage(new SimpleMessage(MSG_PREFIX));
     le.setThreadName("threadName");
     return le;
-  } 
+  }
 }

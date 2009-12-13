@@ -20,10 +20,9 @@ import java.io.Serializable;
 import java.util.Map;
 
 import org.slf4j.Marker;
-import org.slf4j.StructuredData;
-import org.slf4j.helpers.MessageFormatter;
 
 import ch.qos.logback.classic.Level;
+import org.slf4j.message.Message;
 
 // http://www.riehle.org/computer-science/research/1998/ubilab-tr-1998-10-1.html
 
@@ -37,22 +36,12 @@ public class LoggingEventVO implements ILoggingEvent, Serializable {
 
   private static final long serialVersionUID = 6553722650255690312L;
 
-  private static final int NULL_ARGUMENT_ARRAY = -1;
-  private static final String NULL_ARGUMENT_ARRAY_ELEMENT = "NULL_ARGUMENT_ARRAY_ELEMENT";
-
   private String threadName;
   private String loggerName;
   private LoggerContextVO loggerContextVO;
 
   private transient Level level;
-  private String message;
-
-  // we gain significant space at serialization time by marking
-  // formattedMessage as transient and constructing it lazily in
-  // getFormmatedMessage()
-  private transient String formattedMessage;
-
-  private transient Object[] argumentArray;
+  private Message message;
 
   private ThrowableProxyVO throwableProxy;
   private StackTraceElement[] callerDataArray;
@@ -67,7 +56,6 @@ public class LoggingEventVO implements ILoggingEvent, Serializable {
     ledo.threadName = le.getThreadName();
     ledo.level = (le.getLevel());
     ledo.message = (le.getMessage());
-    ledo.argumentArray = (le.getArgumentArray());
     ledo.marker = le.getMarker();
     ledo.mdcPropertyMap = le.getMDCPropertyMap();
     ledo.timeStamp = le.getTimeStamp();
@@ -96,26 +84,15 @@ public class LoggingEventVO implements ILoggingEvent, Serializable {
     return level;
   }
 
-  public String getMessage() {
+  public Message getMessage() {
     return message;
   }
 
   public String getFormattedMessage() {
-    if (formattedMessage != null) {
-      return formattedMessage;
+    if (message == null) {
+      return null;
     }
-
-    if (argumentArray != null) {
-      formattedMessage = MessageFormatter.arrayFormat(message, argumentArray);
-    } else {
-      formattedMessage = message;
-    }
-
-    return formattedMessage;
-  }
-
-  public Object[] getArgumentArray() {
-    return argumentArray;
+    return message.getFormattedMessage();
   }
 
   public IThrowableProxy getThrowableProxy() {
@@ -138,8 +115,6 @@ public class LoggingEventVO implements ILoggingEvent, Serializable {
     return timeStamp;
   }
 
-
-
   public long getContextBirthTime() {
     return loggerContextVO.getBirthTime();
   }
@@ -158,24 +133,7 @@ public class LoggingEventVO implements ILoggingEvent, Serializable {
   private void writeObject(ObjectOutputStream out) throws IOException {
     out.defaultWriteObject();
     out.writeInt(level.levelInt);
-    if (argumentArray != null) {
-      int len = argumentArray.length;
-      out.writeInt(len);
-      for (int i = 0; i < argumentArray.length; i++) {
-        if (argumentArray[i] != null) {
-          if (argumentArray[i] instanceof StructuredData) {
-            out.writeObject(argumentArray[i]);
-          } else {
-            out.writeObject(argumentArray[i].toString());
-          }
-        } else {
-          out.writeObject(NULL_ARGUMENT_ARRAY_ELEMENT);
-        }
-      }
-    } else {
-      out.writeInt(NULL_ARGUMENT_ARRAY);
-    }
-
+    out.writeObject(message);
   }
 
   private void readObject(ObjectInputStream in) throws IOException,
@@ -183,17 +141,7 @@ public class LoggingEventVO implements ILoggingEvent, Serializable {
     in.defaultReadObject();
     int levelInt = in.readInt();
     level = Level.toLevel(levelInt);
-
-    int argArrayLen = in.readInt();
-    if (argArrayLen != NULL_ARGUMENT_ARRAY) {
-      argumentArray = new Serializable[argArrayLen];
-      for (int i = 0; i < argArrayLen; i++) {
-        Object val = in.readObject();
-        if (!NULL_ARGUMENT_ARRAY_ELEMENT.equals(val)) {
-          argumentArray[i] = val;
-        }
-      }
-    }
+    message = (Message) in.readObject();
   }
 
   @Override

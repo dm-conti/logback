@@ -17,5 +17,5 @@ package ch.qos.logback.classic.net;
  * List of transport types.
  */
 public enum TransportType {
-  UDP, TCP, TLS
+  UDP, TCP, TLS, TCP_WITH_LENGTH
 }

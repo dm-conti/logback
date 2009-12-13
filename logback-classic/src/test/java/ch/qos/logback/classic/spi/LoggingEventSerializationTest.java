@@ -35,6 +35,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.net.LoggingEventPreSerializationTransformer;
 import ch.qos.logback.core.spi.PreSerializationTransformer;
+import org.slf4j.message.ParameterizedMessage;
 
 public class LoggingEventSerializationTest {
 
@@ -65,7 +66,7 @@ public class LoggingEventSerializationTest {
 
   @Test
   public void smoke() throws Exception {
-    ILoggingEvent event = createLoggingEvent();
+    ILoggingEvent event = createLoggingEvent(null);
     ILoggingEvent remoteEvent = writeAndRead(event);
     checkForEquality(event, remoteEvent);
   }
@@ -73,7 +74,7 @@ public class LoggingEventSerializationTest {
   @Test
   public void context() throws Exception {
     lc.putProperty("testKey", "testValue");
-    ILoggingEvent event = createLoggingEvent();
+    ILoggingEvent event = createLoggingEvent(null);
     ILoggingEvent remoteEvent = writeAndRead(event);
     checkForEquality(event, remoteEvent);
 
@@ -91,7 +92,7 @@ public class LoggingEventSerializationTest {
   @Test
   public void MDC() throws Exception {
     MDC.put("key", "testValue");
-    ILoggingEvent event = createLoggingEvent();
+    ILoggingEvent event = createLoggingEvent(null);
     ILoggingEvent remoteEvent = writeAndRead(event);
     checkForEquality(event, remoteEvent);
     Map<String, String> MDCPropertyMap = remoteEvent.getMDCPropertyMap();
@@ -101,12 +102,12 @@ public class LoggingEventSerializationTest {
   @Test
   public void updatedMDC() throws Exception {
     MDC.put("key", "testValue");
-    ILoggingEvent event1 = createLoggingEvent();
+    ILoggingEvent event1 = createLoggingEvent(null);
     Serializable s1 = pst.transform(event1);
     oos.writeObject(s1);
 
     MDC.put("key", "updatedTestValue");
-    ILoggingEvent event2 = createLoggingEvent();
+    ILoggingEvent event2 = createLoggingEvent(null);
     Serializable s2 = pst.transform(event2);
     oos.writeObject(s2);
 
@@ -126,13 +127,14 @@ public class LoggingEventSerializationTest {
 
   @Test
   public void nonSerializableParameters() throws Exception {
-    LoggingEvent event = createLoggingEvent();
     LuckyCharms lucky0 = new LuckyCharms(0);
-    event.setArgumentArray(new Object[] { lucky0, null });
+    Object[] args = new Object[] { lucky0, null };
+    LoggingEvent event = createLoggingEvent(args);
+
     ILoggingEvent remoteEvent = writeAndRead(event);
     checkForEquality(event, remoteEvent);
 
-    Object[] aa = remoteEvent.getArgumentArray();
+    Object[] aa = remoteEvent.getMessage().getParameters();
     assertNotNull(aa);
     assertEquals(2, aa.length);
     assertEquals("LC(0)", aa[0]);
@@ -141,7 +143,7 @@ public class LoggingEventSerializationTest {
 
   @Test
   public void _Throwable() throws Exception {
-    LoggingEvent event = createLoggingEvent();
+    LoggingEvent event = createLoggingEvent(null);
     Throwable throwable = new Throwable("just testing");
     ThrowableProxy tp = new ThrowableProxy(throwable);
     event.setThrowableProxy(tp);
@@ -151,7 +153,7 @@ public class LoggingEventSerializationTest {
 
   @Test
   public void extendendeThrowable() throws Exception {
-    LoggingEvent event = createLoggingEvent();
+    LoggingEvent event = createLoggingEvent(null);
     Throwable throwable = new Throwable("just testing");
     ThrowableProxy tp = new ThrowableProxy(throwable);
     event.setThrowableProxy(tp);
@@ -171,21 +173,20 @@ public class LoggingEventSerializationTest {
     String largeString = buffer.toString();
     Object[] argArray = new Object[] { new LuckyCharms(2), largeString };
 
-    LoggingEvent event = createLoggingEvent();
-    event.setArgumentArray(argArray);
+    LoggingEvent event = createLoggingEvent(argArray);
 
     ILoggingEvent remoteEvent = writeAndRead(event);
     checkForEquality(event, remoteEvent);
-    Object[] aa = remoteEvent.getArgumentArray();
+    Object[] aa = remoteEvent.getMessage().getParameters();
     assertNotNull(aa);
     assertEquals(2, aa.length);
     String stringBack = (String) aa[1];
     assertEquals(largeString, stringBack);
   }
 
-  private LoggingEvent createLoggingEvent() {
+  private LoggingEvent createLoggingEvent(Object[] args) {
     LoggingEvent le = new LoggingEvent(this.getClass().getName(), logger,
-        Level.DEBUG, "test message", null, null);
+        Level.DEBUG, new ParameterizedMessage("test message", args), null);
     return le;
   }
 
