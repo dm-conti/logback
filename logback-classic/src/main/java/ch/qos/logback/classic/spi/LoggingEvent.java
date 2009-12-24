@@ -18,7 +18,6 @@ import java.util.Map;
 
 import org.slf4j.MDC;
 import org.slf4j.Marker;
-import org.slf4j.helpers.MessageFormatter;
 import org.slf4j.impl.LogbackMDCAdapter;
 
 import ch.qos.logback.classic.Level;
@@ -77,6 +76,8 @@ public class LoggingEvent implements ILoggingEvent {
   private Marker marker;
 
   private Map<String, String> mdcPropertyMap;
+
+  private Throwable callerContext;
 
   /**
    * The number of milliseconds elapsed from 1/1/1970 until logging event was
@@ -172,6 +173,7 @@ public class LoggingEvent implements ILoggingEvent {
    * information.
    */
   public void prepareForDeferredProcessing() {
+    this.callerContext = new Throwable();
     this.getThreadName();
     // fixes http://jira.qos.ch/browse/LBCLASSIC-104
     if (mdcPropertyMap != null) {
@@ -221,7 +223,8 @@ public class LoggingEvent implements ILoggingEvent {
    */
   public StackTraceElement[] getCallerData() {
     if (callerDataArray == null) {
-      callerDataArray = CallerData.extract(new Throwable(), fqnOfLoggerClass,
+      Throwable t = (callerContext != null) ? callerContext : new Throwable();
+      callerDataArray = CallerData.extract(t, fqnOfLoggerClass,
           loggerContext.getMaxCallerDataDepth());
     }
     return callerDataArray;

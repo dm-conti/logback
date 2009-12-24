@@ -18,6 +18,10 @@ import ch.qos.logback.classic.pattern.SyslogOption;
 import ch.qos.logback.classic.pattern.ConverterOptions;
 import ch.qos.logback.classic.pattern.StructuredDataOption;
 import ch.qos.logback.classic.PatternLayout;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.LayoutBase;
+import org.slf4j.message.Message;
+import org.slf4j.message.StructuredDataMessage;
 
 /**
  * <p>
@@ -25,7 +29,7 @@ import ch.qos.logback.classic.PatternLayout;
  *
  */
 
-public class IETFSyslogLayout extends PatternLayout
+public class IETFSyslogLayout extends LayoutBase<ILoggingEvent>
 {
 
   String facilityStr;
@@ -34,12 +38,20 @@ public class IETFSyslogLayout extends PatternLayout
   String structuredDataId;
   String enterpriseNumber;
   boolean mdcIncluded;
+  String mdcId;
+  private PatternLayout defaultLayout = new PatternLayout();
+  private PatternLayout structuredLayout = new PatternLayout();
+  private String defaultPattern;
+  private String structuredPattern;
+  public static final String DEFAULT_SUFFIX_PATTERN = "[%thread] %logger %msg";
 
   public void start() {
-    getInstanceConverterMap().put("syslogStart", IETFSyslogStartConverter.class.getName());
     if (facilityStr == null) {
       addError("The Facility option is mandatory");
     }
+    defaultLayout.getInstanceConverterMap().put("syslogStart", IETFSyslogStartConverter.class.getName());
+    structuredLayout.getInstanceConverterMap().put("syslogStart", IETFSyslogStartConverter.class.getName());
+
     ConverterOptions<SyslogOption> syslogOptions = new ConverterOptions<SyslogOption>(facilityStr);
     syslogOptions.add(SyslogOption.APPNAME, getAppName());
     syslogOptions.add(SyslogOption.MESSAGEID, getMessageId());
@@ -51,16 +63,49 @@ public class IETFSyslogLayout extends PatternLayout
     }
     sdOptions.add(StructuredDataOption.ENTERPRISE_NUMBER, getEnterpriseNumber());
     sdOptions.add(StructuredDataOption.INCLUDE_MDC, isMdcIncluded());
+    sdOptions.add(StructuredDataOption.MDC_ELEMENT, getMdcId());
 
     String prefixPattern = "%syslogStart{" + syslogOptions.toString() + "}%SD{" + sdOptions.toString() + "}%nopex";
-
-    if (getPattern() == null) {
-      setPattern(prefixPattern + "%SD{Message}");
+    defaultLayout.setContext(getContext());
+    if (defaultPattern == null) {
+      defaultLayout.setPattern(prefixPattern + DEFAULT_SUFFIX_PATTERN);
     } else {
-      setPattern(prefixPattern + getPattern());
+      defaultLayout.setPattern(prefixPattern + defaultPattern);
     }
+    defaultLayout.start();
+    structuredLayout.setContext(getContext());
+    if (structuredPattern == null) {
+      structuredLayout.setPattern(prefixPattern + "%SD{Message}");
+    } else {
+      structuredLayout.setPattern(prefixPattern + structuredPattern);
+    }
+    structuredLayout.start();    
 
     super.start();
+  }
+
+  public String doLayout(ILoggingEvent event) {
+    Message msg = event.getMessage();
+    if (msg != null && msg instanceof StructuredDataMessage) {
+      return structuredLayout.doLayout(event);
+    }
+    return defaultLayout.doLayout(event);
+  }
+
+  public void setDefaultPattern(String pattern) {
+    defaultPattern = pattern;
+  }
+
+  public String getDefaultPattern() {
+    return defaultPattern;
+  }
+
+  public String getStructuredPattern() {
+    return structuredPattern;
+  }
+
+  public void setStructuredPattern(String structuredPattern) {
+    this.structuredPattern = structuredPattern;
   }
 
   public String getAppName() {
@@ -101,6 +146,14 @@ public class IETFSyslogLayout extends PatternLayout
 
   public void setMdcIncluded(boolean mdcIncluded) {
     this.mdcIncluded = mdcIncluded;
+  }
+
+  public String getMdcId() {
+    return mdcId;
+  }
+
+  public void setMdcId(String mdcId) {
+    this.mdcId = mdcId;
   }
 
   /**

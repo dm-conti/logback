@@ -80,7 +80,7 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
     }
 
     try {
-      String msg = getLayout(eventObject).doLayout(eventObject);
+      String msg = layout.doLayout(eventObject);
       if(msg != null && msg.length() > MSG_SIZE_LIMIT) {
         msg = msg.substring(0, MSG_SIZE_LIMIT);
       }
@@ -95,10 +95,6 @@ public abstract class SyslogAppenderBase<E> extends AppenderBase<E> {
 
   protected void postProcess(Object event, SyslogWriter sw) {
 
-  }
-
-  protected Layout<E> getLayout(E eventObject) {
-    return layout;
   }
 
   /**

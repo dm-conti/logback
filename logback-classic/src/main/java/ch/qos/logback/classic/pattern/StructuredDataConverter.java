@@ -31,6 +31,7 @@ public class StructuredDataConverter extends ClassicConverter {
   boolean leadingSpace;
   boolean trailingSpace;
   boolean includeMDC;
+  String mdcName = "mdc";
   boolean hideNil;
   protected static final String EMPTY_STRING = "";
   protected static final String NIL_STRING = "-";
@@ -65,6 +66,9 @@ public class StructuredDataConverter extends ClassicConverter {
         case INCLUDE_MDC:
           includeMDC = Boolean.parseBoolean(entry.getValue());
           break;
+        case MDC_ELEMENT:
+          mdcName = entry.getValue();
+          break;
         case HIDE_NIL:
           hideNil = Boolean.parseBoolean(entry.getValue());
           break;
@@ -91,27 +95,20 @@ public class StructuredDataConverter extends ClassicConverter {
       return EMPTY_STRING;
     }
 
-    StructuredDataMessage data = (StructuredDataMessage) message;
-
+    StructuredDataMessage data = isStructured ? (StructuredDataMessage) message : null;
     boolean leadingDone = false;
     StructuredDataId id = null;
 
     if (key == null) {
       StringBuilder sb = new StringBuilder();
-      if (isStructured) {
-        /*Map[] maps = null;
-        if (includeMDC) {
-          maps = new Map[] { event.getMDCPropertyMap() };
-        } */
+      if (data != null) {
         id = data.getId();
-        if (id != null && (id.getName() != null || defaultId != null)) {
-          if (id == null) {
-            if (defaultId != null) {
-              id = new StructuredDataId(defaultId, enterpriseNumber, null, null);
-            }
-          } else {
-            id = id.makeId(defaultId, enterpriseNumber);
-          }
+        if (id != null && defaultId != null) {
+          id = id.makeId(defaultId, enterpriseNumber);
+        } else if (defaultId != null) {
+          id = new StructuredDataId(defaultId, enterpriseNumber, null, null);
+        }
+        if (id != null) {
           String str = data.asString(format, id);
           if (str != null && str.length() > 0) {
             if (leadingSpace) {
@@ -125,7 +122,7 @@ public class StructuredDataConverter extends ClassicConverter {
       if (isMDC) {
         int ein = id == null || id.isReserved() ? enterpriseNumber : id.getEnterpriseNumber();
         if (ein > 0) {
-          id = new StructuredDataId("mdc", ein, null, null);
+          id = new StructuredDataId(mdcName, ein, null, null);
           StructuredDataMessage mdcData = new StructuredDataMessage(id, null, null);
           mdcData.putAll(mdc);
           String str = mdcData.asString(format, id);
@@ -145,16 +142,21 @@ public class StructuredDataConverter extends ClassicConverter {
     }
 
     String msg = null;
-    if (key.equalsIgnoreCase(MESSAGE)) {
-      msg = OptionHelper.substVars(data.getMessageFormat(), new SDContainer(data));
-    } else if (key.equalsIgnoreCase(ID)) {
-      msg = data.getId().toString();
-    } else if (key.equalsIgnoreCase(TYPE)) {
-      msg = data.getType();
-    } else {
-      Object obj = data.getData().get(key);
-      if (obj != null) {
-        msg = obj.toString();
+    if (data != null) {
+      if (key.equalsIgnoreCase(MESSAGE)) {
+        String txt = data.getMessageFormat();
+        if (txt != null) {
+          msg = OptionHelper.substVars(txt, new SDContainer(data));
+        }
+      } else if (key.equalsIgnoreCase(ID)) {
+        msg = data.getId().toString();
+      } else if (key.equalsIgnoreCase(TYPE)) {
+        msg = data.getType();
+      } else {
+        Object obj = data.getData().get(key);
+        if (obj != null) {
+          msg = obj.toString();
+        }
       }
     }
     return msg == null ? EMPTY_STRING : msg;

@@ -13,5 +13,5 @@ package ch.qos.logback.classic.pattern;
  * Options passed from the StructuredDataConverter.
  */
 public enum StructuredDataOption {
-  LEADING_SPACE, TRAILING_SPACE, FORMAT, INCLUDE_MDC, DEFAULT_ID, ENTERPRISE_NUMBER, HIDE_NIL 
+  LEADING_SPACE, TRAILING_SPACE, FORMAT, INCLUDE_MDC, MDC_ELEMENT, DEFAULT_ID, ENTERPRISE_NUMBER, HIDE_NIL 
 }

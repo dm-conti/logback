@@ -30,8 +30,6 @@ import ch.qos.logback.core.net.SyslogConstants;
 import ch.qos.logback.core.testUtil.RandomUtil;
 import ch.qos.logback.core.util.StatusPrinter;
 
-import java.util.Map;
-
 public class IETFSyslogAppenderTest {
 
   @Before
@@ -85,7 +83,7 @@ public class IETFSyslogAppenderTest {
     msg = msg.substring(index+1);
     String expected = "<"
         + (SyslogConstants.LOG_MAIL + SyslogConstants.DEBUG_SEVERITY) + ">";
-    assertTrue(msg.startsWith(expected));
+    assertTrue("expected " + expected + " actual " + msg, msg.startsWith(expected));
 
     String first = "<\\d{2}>1 \\w{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}\\.\\d{1,3}[\\S]* [\\w.-]* [\\w.-]* - [\\w.-]* ";
     checkRegexMatch(msg, first + "\\[" + threadName + "\\] " + loggerName
@@ -130,7 +128,7 @@ public class IETFSyslogAppenderTest {
 
     int index = msg.indexOf(" ");
     int length = Integer.parseInt(msg.substring(0, index));
-    assertTrue("Invalid message length", length > 0);
+    assertTrue("Invalid message length for " + msg, length > 0);
     msg = msg.substring(index+1);
 
     String expected = "<"

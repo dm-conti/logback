@@ -26,8 +26,6 @@ import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.net.SyslogAppenderBase;
 import ch.qos.logback.core.net.SyslogWriter;
-import org.slf4j.message.Message;
-import org.slf4j.message.StructuredDataMessage;
 
 /**
  * This appender can be used to send messages to a remote syslog daemon in IETF Syslog format (RFC 5424).
@@ -37,60 +35,36 @@ import org.slf4j.message.StructuredDataMessage;
  * @author Ralph Goers
  */
 public class IETFSyslogAppender extends SyslogAppenderBase<ILoggingEvent> {
-  public static final String DEFAULT_SUFFIX_PATTERN = "[%thread] %logger %msg";
   String appName;
   String messageId;
   String structuredDataId;
   String enterpriseNumber;
   boolean mdcIncluded;
+  String mdcId;
 
   PatternLayout prefixLayout = new PatternLayout();
-  IETFSyslogLayout structuredLayout;
-  IETFSyslogLayout defaultLayout;
 
   TransportType transport = TransportType.UDP;
 
   public Layout<ILoggingEvent> buildLayout(String facilityStr) {
 
-    structuredLayout = new IETFSyslogLayout();
-    structuredLayout.setFacility(facilityStr);
-    structuredLayout.setAppName(appName);
-    structuredLayout.setMessageId(messageId);
-    structuredLayout.setStructuredDataId(structuredDataId);
-    structuredLayout.setMdcIncluded(mdcIncluded);
-    structuredLayout.setEnterpriseNumber(enterpriseNumber);
-    structuredLayout.setContext(getContext());
-    defaultLayout = new IETFSyslogLayout();
-    defaultLayout.setFacility(facilityStr);
-    defaultLayout.setAppName(appName);
-    defaultLayout.setMessageId(messageId);
-    defaultLayout.setStructuredDataId(structuredDataId);
-    defaultLayout.setMdcIncluded(mdcIncluded);
-    defaultLayout.setEnterpriseNumber(enterpriseNumber);
-    defaultLayout.setContext(getContext());
+    IETFSyslogLayout layout = new IETFSyslogLayout();
+    layout.setFacility(facilityStr);
+    layout.setAppName(appName);
+    layout.setMessageId(messageId);
+    layout.setStructuredDataId(structuredDataId);
+    layout.setMdcIncluded(mdcIncluded);
+    layout.setEnterpriseNumber(enterpriseNumber);
+    layout.setContext(getContext());
+    layout.setMdcId(mdcId);
 
-    if (suffixPattern == null) {
-      defaultLayout.setPattern(DEFAULT_SUFFIX_PATTERN);
-    } else {
-      defaultLayout.setPattern(suffixPattern);
-      structuredLayout.setPattern(suffixPattern);
+    if (suffixPattern != null) {
+      layout.setDefaultPattern(suffixPattern);
+      layout.setStructuredPattern(suffixPattern);
     }
+    layout.start();
 
-    structuredLayout.setContext(getContext());
-    structuredLayout.start();
-
-    defaultLayout.setContext(getContext());
-    defaultLayout.start();
-
-    return defaultLayout;
-  }
-
-  protected Layout<ILoggingEvent> getLayout(ILoggingEvent event) {
-    Message msg = event.getMessage();
-    if (msg != null && msg instanceof StructuredDataMessage) {
-      return structuredLayout;
-    }
-    return defaultLayout;
+    return layout;
   }
 
   /*
