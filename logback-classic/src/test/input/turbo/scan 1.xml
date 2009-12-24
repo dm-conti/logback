@@ -3,7 +3,6 @@
 
 <configuration scan="true" scanPeriod="50 millisecond">
 
-  <root level="ERROR">
-  </root>
+  <root level="ERROR"/>
 
-</configuration> 
+</configuration>

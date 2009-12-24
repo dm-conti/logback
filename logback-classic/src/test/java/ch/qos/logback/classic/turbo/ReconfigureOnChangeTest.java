@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.helpers.BogoPerf;
@@ -67,9 +68,10 @@ public class ReconfigureOnChangeTest {
 
   @Before
   public void setUp() {
-    // take into account propagation latency occurs on Linux
+    System.out.println("======== TEST START");
+    // take into account propagation latency occurs on Linux or Mac
     if (Env.isLinux() || Env.isMac()) {
-      sleepBetweenUpdates = 1000;
+      sleepBetweenUpdates = 950;
       totalTestDuration = sleepBetweenUpdates * 5;
     } else {
       totalTestDuration = sleepBetweenUpdates * 10;
@@ -77,6 +79,10 @@ public class ReconfigureOnChangeTest {
     harness = new MultiThreadedHarness(totalTestDuration);
   }
 
+  @After
+  public void tearDown() {
+    System.out.println("======= TEST STOP");
+  }
   void configure(File file) throws JoranException {
     JoranConfigurator jc = new JoranConfigurator();
     jc.setContext(loggerContext);
@@ -105,6 +111,7 @@ public class ReconfigureOnChangeTest {
   // Tests whether ConfigurationAction is installing ReconfigureOnChangeFilter
   @Test
   public void scan1() throws JoranException, IOException, InterruptedException {
+    System.out.println("***SCAN1");
     File file = new File(SCAN1_FILE_AS_STR);
     configure(file);
     RunnableWithCounterAndDone[] runnableArray = buildRunnableArray(file);
@@ -133,7 +140,7 @@ public class ReconfigureOnChangeTest {
     verify(expectedRreconfigurations);
   }
 
-  void verify(long expectedRreconfigurations) {
+  void verify(long expectedReconfigurations) {
     StatusChecker checker = new StatusChecker(loggerContext);
     StatusPrinter.print(loggerContext);
     assertTrue(checker.isErrorFree());
@@ -141,12 +148,12 @@ public class ReconfigureOnChangeTest {
         .matchCount("Resetting and reconfiguring context");
     // the number of effective resets must be equal or less than
     // expectedRreconfigurations
-    assertTrue(effectiveResets <= expectedRreconfigurations);
+    assertTrue(effectiveResets <= expectedReconfigurations);
     // however, there should be some effective resets
     String failMsg = "effective=" + effectiveResets + ", expected="
-        + expectedRreconfigurations;
+        + expectedReconfigurations;
     assertTrue(failMsg,
-        (effectiveResets * 1.3) >= (expectedRreconfigurations * 1.0));
+        (effectiveResets * 1.3) >= (expectedReconfigurations * 1.0));
   }
 
   ReconfigureOnChangeFilter initROCF() throws MalformedURLException {
